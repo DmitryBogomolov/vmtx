@@ -1,0 +1,14 @@
+{
+  "name": "vmx",
+  "version": "0.0.1",
+  "description": "Allows to execute code in sandbox using 'vm' package",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Dmitry Bogomolov",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^20.0.4"
+  }
+}
