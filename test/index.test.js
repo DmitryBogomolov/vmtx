@@ -16,4 +16,10 @@ describe('vmx', () => {
 
         expect(result).toEqual(obj);
     });
+
+    test('require local file', () => {
+        const result = vmx('module.exports = require("./test/data/tester-1.js");');
+
+        expect(result).toEqual(102);
+    });
 });
