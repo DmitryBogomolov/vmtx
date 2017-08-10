@@ -2,24 +2,34 @@ const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
 
-function parseJsFile(content, options) {
-    return runCode(content, options);
-}
-
-function requireJsonFile(content) {
-    return JSON.parse(content);
-}
-
 const PARSERS = {
     '.js': runCode,
     '.json': JSON.parse
 };
 
+function checkFileExists(pathToFile, ext) {
+    const pathWithExt = pathToFile + ext;
+    return fs.existsSync(pathWithExt) ? pathWithExt : null;
+}
+
+function throwFileNotFound(pathToFile) {
+    throw new Error(`Cannot find '${pathToFile}`);
+}
+
+function guessFileExtension(pathToFile) {
+    return path.extname(pathToFile) !== ''
+        ? pathToFile
+        : (checkFileExists(pathToFile, '.js')
+            || checkFileExists(pathToFile, '.json')
+            || throwFileNotFound(pathToFile)
+        );
+}
+
 function requirePackage(arg, options) {
     if (arg.startsWith('/') || arg.startsWith('.')) {
-        const pathToFile = path.resolve(arg);
+        const pathToFile = guessFileExtension(path.resolve(arg));
         const content = fs.readFileSync(pathToFile, 'utf8');
-        return PARSERS[path.extname(arg)](content, options);
+        return PARSERS[path.extname(pathToFile)](content, options);
     } else {
         return (options.packages && options.packages[arg]) || null;
     }

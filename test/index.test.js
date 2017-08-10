@@ -39,3 +39,15 @@ test('fail when local file is not found', (t) => {
         t.pass();
     }
 });
+
+test('guess local .js file extension', (t) => {
+    const result = vmx('module.exports = require("./test/data/tester-1");');
+
+    t.is(result, 102);
+});
+
+test('guess local .json file extension', (t) => {
+    const result = vmx('module.exports = require("./test/data/tester-2");');
+
+    t.deepEqual(result, {  tag: 'test-data' });
+});
