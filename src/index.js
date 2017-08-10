@@ -2,15 +2,24 @@ const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
 
-function requireJsFile(pathToFile, options) {
-    const content = fs.readFileSync(pathToFile, 'utf8');
+function parseJsFile(content, options) {
     return runCode(content, options);
 }
+
+function requireJsonFile(content) {
+    return JSON.parse(content);
+}
+
+const PARSERS = {
+    '.js': runCode,
+    '.json': JSON.parse
+};
 
 function requirePackage(arg, options) {
     if (arg.startsWith('/') || arg.startsWith('.')) {
         const pathToFile = path.resolve(arg);
-        return requireJsFile(pathToFile, options);
+        const content = fs.readFileSync(pathToFile, 'utf8');
+        return PARSERS[path.extname(arg)](content, options);
     } else {
         return (options.packages && options.packages[arg]) || null;
     }
