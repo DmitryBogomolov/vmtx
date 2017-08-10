@@ -4,11 +4,18 @@
   "description": "Executes code in sandbox using 'vm' package",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "ava"
   },
   "author": "Dmitry Bogomolov",
   "license": "MIT",
   "devDependencies": {
-    "jest": "^20.0.4"
+    "ava": "^0.21.0"
+  },
+  "ava": {
+    "files": [
+      "test/*.test.js"
+    ],
+    "tap": true,
+    "color": true
   }
 }

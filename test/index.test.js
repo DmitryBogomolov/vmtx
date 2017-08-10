@@ -1,25 +1,26 @@
+const test = require('ava');
 const fs = require('fs');
 const vmx = require('../src/index');
 
-describe('vmx', () => {
-    test('execute simple code', () => {
-        expect(vmx('module.exports = 10;')).toEqual(10);
+test('execute simple code', (t) => {
+    const result = vmx('module.exports = 10;');
+
+    t.is(result, 10);
+});
+
+test('require package', (t) => {
+    const obj = { tag: 'test-package' };
+    const result = vmx('module.exports = require("test-package");', {
+        packages: {
+            'test-package': obj
+        }
     });
 
-    test('require package', () => {
-        const obj = { tag: 'test-package' };
-        const result = vmx('module.exports = require("test-package");', {
-            packages: {
-                'test-package': obj
-            }
-        });
+    t.is(result, obj);
+});
 
-        expect(result).toEqual(obj);
-    });
+test('require local file', (t) => {
+    const result = vmx('module.exports = require("./test/data/tester-1.js");');
 
-    test('require local file', () => {
-        const result = vmx('module.exports = require("./test/data/tester-1.js");');
-
-        expect(result).toEqual(102);
-    });
+    t.is(result, 102);
 });
