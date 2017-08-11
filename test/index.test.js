@@ -88,12 +88,13 @@ describe('Lib', () => {
     });
 
     it('caches loaded modules', () => {
-        const result = lib(`
+        const code = `
             const obj1 = require('test-package');
             const obj2 = require('test-package');
             obj2['test-change'] = 2;
             module.exports = obj1;
-        `, {
+        `;
+        const result = lib(code, {
             packages: {
                 'test-package': { tag: 'test-package' }
             }

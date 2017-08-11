@@ -12,10 +12,6 @@ function checkFileExists(pathToFile, ext) {
     return fs.existsSync(pathWithExt) ? pathWithExt : null;
 }
 
-function throwFileNotFound(pathToFile) {
-    throw new Error(`Cannot find '${pathToFile}`);
-}
-
 function guessFileExtension(pathToFile) {
     if (path.extname(pathToFile) !== '') {
         return pathToFile;
