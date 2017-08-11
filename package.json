@@ -4,11 +4,12 @@
   "description": "Executes code in sandbox using 'vm' package",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "mocha --full-trace -c -R spec"
   },
   "author": "Dmitry Bogomolov",
   "license": "MIT",
   "devDependencies": {
-    "jest": "^20.0.4"
+    "chai": "^4.1.1",
+    "mocha": "^3.5.0"
   }
 }
