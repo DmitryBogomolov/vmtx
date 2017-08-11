@@ -4,18 +4,12 @@
   "description": "Executes code in sandbox using 'vm' package",
   "main": "index.js",
   "scripts": {
-    "test": "ava"
+    "test": "mocha"
   },
   "author": "Dmitry Bogomolov",
   "license": "MIT",
   "devDependencies": {
-    "ava": "^0.21.0"
-  },
-  "ava": {
-    "files": [
-      "test/*.test.js"
-    ],
-    "tap": true,
-    "color": true
+    "chai": "^4.1.1",
+    "mocha": "^3.5.0"
   }
 }
