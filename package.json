@@ -1,7 +1,7 @@
 {
-  "name": "vmx",
+  "name": "vmtx",
   "version": "0.0.1",
-  "description": "Allows to execute code in sandbox using 'vm' package",
+  "description": "Executes code in sandbox using 'vm' package",
   "main": "index.js",
   "scripts": {
     "test": "jest"
