@@ -1,5 +1,4 @@
 const test = require('ava');
-const fs = require('fs');
 const vmx = require('../src/index');
 
 test('execute simple code', (t) => {
@@ -50,4 +49,13 @@ test('guess local .json file extension', (t) => {
     const result = vmx('module.exports = require("./test/data/tester-2");');
 
     t.deepEqual(result, {  tag: 'test-data' });
+});
+
+test('require complex local file', (t) => {
+    const result = vmx('module.exports = require("./test/data/tester-3");');
+
+    t.deepEqual(result, {
+        'tester-1': 102,
+        'tester-2': { tag: 'test-data' }
+    });
 });

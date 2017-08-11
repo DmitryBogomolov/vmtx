@@ -17,34 +17,55 @@ function throwFileNotFound(pathToFile) {
 }
 
 function guessFileExtension(pathToFile) {
-    return path.extname(pathToFile) !== ''
-        ? pathToFile
-        : (checkFileExists(pathToFile, '.js')
-            || checkFileExists(pathToFile, '.json')
-            || throwFileNotFound(pathToFile)
-        );
-}
-
-function requirePackage(arg, options) {
-    if (arg.startsWith('/') || arg.startsWith('.')) {
-        const pathToFile = guessFileExtension(path.resolve(arg));
-        const content = fs.readFileSync(pathToFile, 'utf8');
-        return PARSERS[path.extname(pathToFile)](content, options);
-    } else {
-        return (options.packages && options.packages[arg]) || null;
+    if (path.extname(pathToFile) !== '') {
+        return pathToFile;
     }
+    return checkFileExists(pathToFile, '.js')
+        || checkFileExists(pathToFile, '.json') || pathToFile;
 }
 
-function runCode(content, _options) {
+function loadLocalModule(name, context, dir) {
+    const pathToFile = guessFileExtension(path.resolve(dir, name));
+    const obj = context.modules[pathToFile] = {
+        name: pathToFile,
+        dir: path.dirname(pathToFile)
+    };
+    const parseContent = PARSERS[path.extname(pathToFile)] || PARSERS['.js'];
+    const content = fs.readFileSync(pathToFile, 'utf8');
+    obj.data = parseContent(content, context, obj.dir);
+    return obj.data;
+}
+
+function loadNodeModule(name, context) {
+    const obj = context.modules[name] = { name };
+    obj.data = context.options.packages[name] || null;
+    return obj.data;
+}
+
+function loadModule(name, context, dir) {
+    const load = name.startsWith('/') || name.startsWith('.')
+        ? loadLocalModule : loadNodeModule;
+    return load(name, context, dir);
+}
+
+function runCode(content, context, dir) {
     const _exports = {};
     const _module = { exports: _exports };
-    const options = _options || {};
     vm.runInNewContext(content, {
         exports: _exports,
         module: _module,
-        require: arg => requirePackage(arg, options)
+        require: arg => loadModule(arg, context, dir)
     });
     return _exports === _module.exports ? _exports : _module.exports;
 }
 
-module.exports = runCode;
+function runRootCode(content, options) {
+    return runCode(content, {
+        modules: {},
+        options: Object.assign({
+            packages: {}
+        }, options)
+    }, path.resolve('.'));
+}
+
+module.exports = runRootCode;
