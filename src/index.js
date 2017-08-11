@@ -26,26 +26,42 @@ function guessFileExtension(pathToFile) {
 
 function loadLocalModule(name, context, dir) {
     const pathToFile = guessFileExtension(path.resolve(dir, name));
-    const obj = context.modules[pathToFile] = {
+    const cache = context.modules;
+    if (cache[pathToFile]) {
+        return cache[pathToFile];
+    }
+    const obj = cache[pathToFile] = {
         name: pathToFile,
         dir: path.dirname(pathToFile)
     };
     const parseContent = PARSERS[path.extname(pathToFile)] || PARSERS['.js'];
-    const content = fs.readFileSync(pathToFile, 'utf8');
-    obj.data = parseContent(content, context, obj.dir);
-    return obj.data;
+    try {
+        const content = fs.readFileSync(pathToFile, 'utf8');
+        obj.data = parseContent(content, context, obj.dir);
+    } catch (e) {
+        obj.error = e;
+    }
+    return obj;
 }
 
 function loadNodeModule(name, context) {
-    const obj = context.modules[name] = { name };
+    const cache = context.modules;
+    if (cache[name]) {
+        return cache[name];
+    }
+    const obj = cache[name] = { name };
     obj.data = context.options.packages[name] || null;
-    return obj.data;
+    return obj;
 }
 
 function loadModule(name, context, dir) {
     const load = name.startsWith('/') || name.startsWith('.')
         ? loadLocalModule : loadNodeModule;
-    return load(name, context, dir);
+    const obj = load(name, context, dir);
+    if (obj.error) {
+        throw obj.error;
+    }
+    return obj.data;
 }
 
 function runCode(content, context, dir) {

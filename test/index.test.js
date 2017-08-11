@@ -2,10 +2,22 @@ const { expect } = require('chai');
 const lib = require('../src/index');
 
 describe('Lib', () => {
-    it('executes simple code', () => {
+    it('returns module.exports', () => {
         const result = lib('module.exports = 10;');
 
         expect(result).to.equal(10);
+    });
+
+    it('returns exports', () => {
+        const result = lib(`
+            exports.a = 1;
+            exports.b = 2;
+        `);
+
+        expect(result).to.deep.equal({
+            a: 1,
+            b: 2
+        });
     });
 
     it('loads package', () => {
@@ -41,24 +53,72 @@ describe('Lib', () => {
         expect(isThrown).to.be.true;
     });
 
-    it('guesses local .js file extension', () => {
+    it('guesses .js file extension', () => {
         const result = lib('module.exports = require("./test/data/tester-1");');
 
         expect(result).to.equal(102);
     });
 
-    it('guesses local .json file extension', () => {
+    it('guesses .json file extension', () => {
         const result = lib('module.exports = require("./test/data/tester-2");');
 
         expect(result).to.deep.equal({  tag: 'test-data' });
     });
 
-    it('loads complex local file', () => {
+    it('loads complex file', () => {
         const result = lib('module.exports = require("./test/data/tester-3");');
 
         expect(result).to.deep.equal({
             'tester-1': 102,
             'tester-2': { tag: 'test-data' }
         });
+    });
+
+    it('caches loaded files', () => {
+        const result = lib(`
+            const obj = require('./test/data/tester-2');
+            require('./test/data/tester-4');
+            module.exports = obj;
+        `);
+
+        expect(result).to.deep.equal({
+            tag: 'test-data',
+            'test-change': 2
+        });
+    });
+
+    it('caches loaded modules', () => {
+        const result = lib(`
+            const obj1 = require('test-package');
+            const obj2 = require('test-package');
+            obj2['test-change'] = 2;
+            module.exports = obj1;
+        `, {
+            packages: {
+                'test-package': { tag: 'test-package' }
+            }
+        });
+
+        expect(result).to.deep.equal({
+            tag: 'test-package',
+            'test-change': 2
+        });
+    });
+
+    it('caches failed files', () => {
+        const result = lib(`
+            try {
+                require('./test/no-file');
+            } catch (e) {
+                exports.e1 = e;
+            }
+            try {
+                require('./test/no-file');
+            } catch (e) {
+                exports.e2 = e;
+            }
+        `);
+
+        expect(result.e1).to.equal(result.e2);
     });
 });
