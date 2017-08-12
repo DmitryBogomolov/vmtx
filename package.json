@@ -2,16 +2,28 @@
   "name": "vmtx",
   "version": "0.0.1",
   "description": "Executes code in sandbox using 'vm' package",
-  "main": "index.js",
+  "main": "./src/index.js",
   "scripts": {
     "test": "mocha --full-trace -c -R spec",
     "lint": "eslint ."
   },
   "author": "Dmitry Bogomolov",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DmitryBogomolov/vmtx.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DmitryBogomolov/vmtx/issues"
+  },
+  "homepage": "https://github.com/DmitryBogomolov/vmtx",
   "devDependencies": {
     "chai": "^4.1.1",
     "eslint": "^4.4.1",
     "mocha": "^3.5.0"
-  }
+  },
+  "keywords": [
+    "vm",
+    "sandbox"
+  ]
 }
