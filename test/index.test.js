@@ -22,13 +22,14 @@ describe('Lib', () => {
 
     it('loads package', () => {
         const obj = { tag: 'test-package' };
-        const result = lib('module.exports = require("test-package");', {
+        const result = lib({
+            code: 'module.exports = require("test-package");',
             packages: {
                 'test-package': obj
             }
         });
 
-        expect(result).to.deep.equal(obj);
+        expect(result).to.equal(obj);
     });
 
     it('loads local .js file', () => {
@@ -40,7 +41,7 @@ describe('Lib', () => {
     it('loads local .json file', () => {
         const result = lib('module.exports = require("./test/data/tester-2.json");');
 
-        expect(result).to.deep.equal({  tag: 'test-data' });
+        expect(result).to.deep.equal({ tag: 'test-data' });
     });
 
     it('fails when local file is not found', () => {
@@ -62,7 +63,7 @@ describe('Lib', () => {
     it('guesses .json file extension', () => {
         const result = lib('module.exports = require("./test/data/tester-2");');
 
-        expect(result).to.deep.equal({  tag: 'test-data' });
+        expect(result).to.deep.equal({ tag: 'test-data' });
     });
 
     it('loads complex file', () => {
@@ -94,7 +95,8 @@ describe('Lib', () => {
             obj2['test-change'] = 2;
             module.exports = obj1;
         `;
-        const result = lib(code, {
+        const result = lib({
+            code,
             packages: {
                 'test-package': { tag: 'test-package' }
             }
@@ -121,5 +123,19 @@ describe('Lib', () => {
         `);
 
         expect(result.e1).to.equal(result.e2);
+    });
+
+    it('executes file instead of code', () => {
+        const result = lib({
+            file: './test/data/tester-5'
+        });
+
+        expect(result).to.deep.equal({
+            a: 103,
+            b: {
+                tag: 'test-data',
+                test: 'Hello'
+            }
+        });
     });
 });

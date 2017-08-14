@@ -46,7 +46,7 @@ function loadNodeModule(name, context) {
         return cache[name];
     }
     const obj = cache[name] = { name };
-    obj.data = context.options.packages[name] || null;
+    obj.data = context.packages[name] || null;
     return obj;
 }
 
@@ -71,13 +71,20 @@ function runCode(content, context, dir) {
     return _exports === _module.exports ? _exports : _module.exports;
 }
 
-function runRootCode(content, options) {
-    return runCode(content, {
+function runRootCode(_options) {
+    const options = typeof _options === 'string' ? { code: _options } : _options;
+    const context = {
         modules: {},
-        options: Object.assign({
-            packages: {}
-        }, options)
-    }, path.resolve('.'));
+        packages: options.packages || {}
+    };
+    const dir = path.resolve('.');
+    if (options.code !== undefined) {
+        return runCode(options.code, context, dir);
+    }
+    if (options.file !== undefined) {
+        return loadLocalModule(options.file, context, dir).data;
+    }
+    throw new Error('Neiher *code* nor *file* is defined.');
 }
 
 module.exports = runRootCode;
