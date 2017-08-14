@@ -60,14 +60,14 @@ function loadModule(name, context, dir) {
     return obj.data;
 }
 
-function runCode(content, context, dir) {
+function runCode(code, context, dir) {
     const _exports = {};
     const _module = { exports: _exports };
-    vm.runInNewContext(content, {
+    vm.runInNewContext(code, Object.assign({}, context.globals, {
         exports: _exports,
         module: _module,
         require: arg => loadModule(arg, context, dir)
-    });
+    }));
     return _exports === _module.exports ? _exports : _module.exports;
 }
 
@@ -75,7 +75,8 @@ function runRootCode(_options) {
     const options = typeof _options === 'string' ? { code: _options } : _options;
     const context = {
         modules: {},
-        packages: options.packages || {}
+        packages: options.packages || {},
+        globals: options.globals || {}
     };
     const dir = path.resolve(options.root || '.');
     if (options.code !== undefined) {

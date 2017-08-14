@@ -149,4 +149,42 @@ describe('Lib', () => {
             tag: 'test-data'
         });
     });
+
+    it('allows to define *console*', () => {
+        let arg = null;
+        lib({
+            code: 'console.log("Hello");',
+            globals: {
+                console: {
+                    log: (message) => { arg = message; }
+                }
+            }
+        });
+
+        expect(arg).to.equal('Hello');
+    });
+
+    it('allows to define custom globals', () => {
+        const result = lib({
+            code: 'exports.a = a; exports.b = b;',
+            globals: {
+                a: 1, b: 2
+            }
+        });
+
+        expect(result).to.deep.equal({ a: 1, b: 2 });
+    });
+
+    it('does not allow to redefine *module*, *exports* and *require*', () => {
+        const result = lib({
+            code: 'module.exports = require("./test/data/tester-1");',
+            globals: {
+                module: 10,
+                exports: 'test',
+                require: () => { }
+            }
+        });
+
+        expect(result).to.equal(102);
+    });
 });
