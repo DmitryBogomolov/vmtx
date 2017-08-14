@@ -77,7 +77,7 @@ function runRootCode(_options) {
         modules: {},
         packages: options.packages || {}
     };
-    const dir = path.resolve('.');
+    const dir = path.resolve(options.root || '.');
     if (options.code !== undefined) {
         return runCode(options.code, context, dir);
     }

@@ -138,4 +138,15 @@ describe('Lib', () => {
             }
         });
     });
+
+    it('allows to change root dir', () => {
+        const result = lib({
+            code: 'module.exports = require("./tester-2");',
+            root: './test/data'
+        });
+
+        expect(result).to.deep.equal({
+            tag: 'test-data'
+        });
+    });
 });
