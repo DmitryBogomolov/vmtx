@@ -1,6 +1,6 @@
 {
   "name": "vmtx",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Executes code in sandbox using 'vm' package",
   "main": "./src/index.js",
   "scripts": {
