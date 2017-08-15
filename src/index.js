@@ -7,6 +7,20 @@ const PARSERS = {
     '.json': JSON.parse
 };
 
+const DEFAULT_GLOBALS_LIST = [
+    'Object', 'String', 'Number', 'Boolean', 'Array', 'Date', 'Buffer',
+    'Function', 'RegExp', 'Promise', 'Error',
+    'console',
+    'Map', 'Set', 'WeakMap', 'WeakSet',
+    'setTimeout', 'clearTimeout',
+    'setInterval', 'clearInterval',
+    'setImmediate', 'clearImmediate'
+];
+const DEFAULT_GLOBALS = {};
+DEFAULT_GLOBALS_LIST.forEach((name) => {
+    DEFAULT_GLOBALS[name] = global[name];
+});
+
 function checkFileExists(pathToFile, ext) {
     const pathWithExt = pathToFile + ext;
     return fs.existsSync(pathWithExt) ? pathWithExt : null;
@@ -46,7 +60,11 @@ function loadNodeModule(name, context) {
         return cache[name];
     }
     const obj = cache[name] = { name };
-    obj.data = context.options.packages[name] || null;
+    try {
+        obj.data = context.getPackage(name);
+    } catch (e) {
+        obj.error = e;
+    }
     return obj;
 }
 
@@ -60,24 +78,45 @@ function loadModule(name, context, dir) {
     return obj.data;
 }
 
-function runCode(content, context, dir) {
+function runCode(code, context, dir) {
     const _exports = {};
     const _module = { exports: _exports };
-    vm.runInNewContext(content, {
+    vm.runInNewContext(code, Object.assign({}, context.globals, {
         exports: _exports,
         module: _module,
         require: arg => loadModule(arg, context, dir)
-    });
+    }));
     return _exports === _module.exports ? _exports : _module.exports;
 }
 
-function runRootCode(content, options) {
-    return runCode(content, {
+function createPackageGetter(realList, customMap) {
+    const cache = Object.assign({}, customMap);
+    return (name) => {
+        if (cache[name]) {
+            return cache[name];
+        } else if (realList.indexOf(name) >= 0) {
+            return (cache[name] = require(name));
+        } else {
+            throw new Error(`Cannot find module '${name}'`);
+        }
+    };
+}
+
+function runRootCode(_options) {
+    const options = typeof _options === 'string' ? { code: _options } : _options;
+    const context = {
         modules: {},
-        options: Object.assign({
-            packages: {}
-        }, options)
-    }, path.resolve('.'));
+        getPackage: createPackageGetter(options.realPackages || [], options.packages),
+        globals: Object.assign({}, options.noDefaultGlobals || DEFAULT_GLOBALS, options.globals)
+    };
+    const dir = path.resolve(options.root || '.');
+    if (options.code !== undefined) {
+        return runCode(options.code, context, dir);
+    }
+    if (options.file !== undefined) {
+        return loadLocalModule(options.file, context, dir).data;
+    }
+    throw new Error('Neiher *code* nor *file* is defined.');
 }
 
 module.exports = runRootCode;
