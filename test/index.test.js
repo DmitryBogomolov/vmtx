@@ -22,19 +22,7 @@ describe('Lib', () => {
         });
     });
 
-    describe('loading packages', () => {
-        it('loads package', () => {
-            const obj = { tag: 'test-package' };
-            const result = lib({
-                code: 'module.exports = require("test-package");',
-                packages: {
-                    'test-package': obj
-                }
-            });
-
-            expect(result).to.equal(obj);
-        });
-
+    describe('loading files', () => {
         it('loads local .js file', () => {
             const result = lib('module.exports = require("./test/data/tester-1.js");');
 
@@ -237,6 +225,38 @@ describe('Lib', () => {
             } catch (e) {
                 expect(e.message).to.equal('Buffer is not defined');
             }
+        });
+    });
+
+    describe('loading packages', () => {
+        it('stubs package', () => {
+            const obj = { tag: 'test-package' };
+            const result = lib({
+                code: 'module.exports = require("test-package");',
+                packages: {
+                    'test-package': obj
+                }
+            });
+
+            expect(result).to.equal(obj);
+        });
+
+        it('fails on not found package', () => {
+            try {
+                lib('require("test");');
+                expect(false).to.be.true;
+            } catch (e) {
+                expect(e.message).to.equal('Cannot find module \'test\'');
+            }
+        });
+
+        it('uses real packages', () => {
+            const result = lib({
+                code: 'module.exports = require("chai");',
+                realPackages: ['chai']
+            });
+
+            expect(result.expect).to.equal(expect);
         });
     });
 });

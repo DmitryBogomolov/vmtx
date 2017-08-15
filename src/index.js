@@ -60,7 +60,11 @@ function loadNodeModule(name, context) {
         return cache[name];
     }
     const obj = cache[name] = { name };
-    obj.data = context.packages[name] || null;
+    try {
+        obj.data = context.getPackage(name);
+    } catch (e) {
+        obj.error = e;
+    }
     return obj;
 }
 
@@ -85,11 +89,24 @@ function runCode(code, context, dir) {
     return _exports === _module.exports ? _exports : _module.exports;
 }
 
+function createPackageGetter(realList, customMap) {
+    const cache = Object.assign({}, customMap);
+    return (name) => {
+        if (cache[name]) {
+            return cache[name];
+        } else if (realList.indexOf(name) >= 0) {
+            return (cache[name] = require(name));
+        } else {
+            throw new Error(`Cannot find module '${name}'`);
+        }
+    };
+}
+
 function runRootCode(_options) {
     const options = typeof _options === 'string' ? { code: _options } : _options;
     const context = {
         modules: {},
-        packages: options.packages || {},
+        getPackage: createPackageGetter(options.realPackages || [], options.packages),
         globals: Object.assign({}, options.noDefaultGlobals || DEFAULT_GLOBALS, options.globals)
     };
     const dir = path.resolve(options.root || '.');
