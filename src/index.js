@@ -7,6 +7,20 @@ const PARSERS = {
     '.json': JSON.parse
 };
 
+const DEFAULT_GLOBALS_LIST = [
+    'Object', 'String', 'Number', 'Boolean', 'Array', 'Date', 'Buffer',
+    'Function', 'RegExp', 'Promise', 'Error',
+    'console',
+    'Map', 'Set', 'WeakMap', 'WeakSet',
+    'setTimeout', 'clearTimeout',
+    'setInterval', 'clearInterval',
+    'setImmediate', 'clearImmediate'
+];
+const DEFAULT_GLOBALS = {};
+DEFAULT_GLOBALS_LIST.forEach((name) => {
+    DEFAULT_GLOBALS[name] = global[name];
+});
+
 function checkFileExists(pathToFile, ext) {
     const pathWithExt = pathToFile + ext;
     return fs.existsSync(pathWithExt) ? pathWithExt : null;
@@ -76,7 +90,7 @@ function runRootCode(_options) {
     const context = {
         modules: {},
         packages: options.packages || {},
-        globals: options.globals || {}
+        globals: Object.assign({}, options.noDefaultGlobals || DEFAULT_GLOBALS, options.globals)
     };
     const dir = path.resolve(options.root || '.');
     if (options.code !== undefined) {

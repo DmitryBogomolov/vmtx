@@ -11,9 +11,9 @@ describe('Lib', () => {
 
         it('returns exports', () => {
             const result = lib(`
-            exports.a = 1;
-            exports.b = 2;
-        `);
+                exports.a = 1;
+                exports.b = 2;
+            `);
 
             expect(result).to.deep.equal({
                 a: 1,
@@ -82,10 +82,10 @@ describe('Lib', () => {
     describe('cache', () => {
         it('caches loaded files', () => {
             const result = lib(`
-            const obj = require('./test/data/tester-2');
-            require('./test/data/tester-4');
-            module.exports = obj;
-        `);
+                const obj = require('./test/data/tester-2');
+                require('./test/data/tester-4');
+                module.exports = obj;
+            `);
 
             expect(result).to.deep.equal({
                 tag: 'test-data',
@@ -95,11 +95,11 @@ describe('Lib', () => {
 
         it('caches loaded modules', () => {
             const code = `
-            const obj1 = require('test-package');
-            const obj2 = require('test-package');
-            obj2['test-change'] = 2;
-            module.exports = obj1;
-        `;
+                const obj1 = require('test-package');
+                const obj2 = require('test-package');
+                obj2['test-change'] = 2;
+                module.exports = obj1;
+            `;
             const result = lib({
                 code,
                 packages: {
@@ -115,17 +115,17 @@ describe('Lib', () => {
 
         it('caches failed files', () => {
             const result = lib(`
-            try {
-                require('./test/no-file');
-            } catch (e) {
-                exports.e1 = e;
-            }
-            try {
-                require('./test/no-file');
-            } catch (e) {
-                exports.e2 = e;
-            }
-        `);
+                try {
+                    require('./test/no-file');
+                } catch (e) {
+                    exports.e1 = e;
+                }
+                try {
+                    require('./test/no-file');
+                } catch (e) {
+                    exports.e2 = e;
+                }
+            `);
 
             expect(result.e1).to.equal(result.e2);
         });
@@ -197,6 +197,46 @@ describe('Lib', () => {
             });
 
             expect(result).to.equal(102);
+        });
+
+        it('provides several globals by default', () => {
+            const list = [
+                'Object', 'String', 'Number', 'Boolean', 'Array', 'Date', 'Buffer',
+                'Function', 'RegExp', 'Promise', 'Error',
+                'console',
+                'Map', 'Set', 'WeakMap', 'WeakSet',
+                'setTimeout', 'clearTimeout',
+                'setInterval', 'clearInterval',
+                'setImmediate', 'clearImmediate'
+            ];
+            const code = list.map(name => `exports._${name} = ${name};`).join('\n');
+            const result = lib(code);
+
+            list.forEach((name) => {
+                expect(result[`_${name}`]).to.equal(global[name]);
+            });
+        });
+
+
+        it('does not provide *process*', () => {
+            try {
+                lib('module.exports = process;');
+                expect(false).to.be.true;
+            } catch (e) {
+                expect(e.message).to.equal('process is not defined');
+            }
+        });
+
+        it('disables default globals', () => {
+            try {
+                lib({
+                    code: 'module.exports = Buffer;',
+                    noDefaultGlobals: true
+                });
+                expect(false).to.be.true;
+            } catch (e) {
+                expect(e.message).to.equal('Buffer is not defined');
+            }
         });
     });
 });
