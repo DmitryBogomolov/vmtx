@@ -2,10 +2,7 @@ const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
 
-const PARSERS = {
-    '.js': runCode,
-    '.json': JSON.parse
-};
+const DEFAULT_TIMEOUT = 60000;
 
 const DEFAULT_GLOBALS_LIST = [
     'Buffer',
@@ -38,6 +35,11 @@ function guessFileExtension(pathToFile) {
     return checkFileExists(pathToFile, '.js')
         || checkFileExists(pathToFile, '.json') || pathToFile;
 }
+
+const PARSERS = {
+    '.js': runCode,
+    '.json': JSON.parse
+};
 
 function loadLocalModule(name, context, dir) {
     const pathToFile = guessFileExtension(path.resolve(dir, name));
@@ -86,13 +88,14 @@ function loadModule(name, context, dir) {
 function runCode(code, context, obj) {
     const _exports = {};
     const _module = { exports: _exports };
-    vm.runInNewContext(code, Object.assign(Object.create(null), context.globals, {
+    const ctx = Object.assign(Object.create(null), context.globals, {
         exports: _exports,
         module: _module,
         require: arg => loadModule(arg, context, obj.dir),
         __filename: obj.name,
         __dirname: obj.dir
-    }));
+    });
+    vm.runInNewContext(code, ctx, { timeout: context.timeout });
     return _exports === _module.exports ? _exports : _module.exports;
 }
 
@@ -114,7 +117,8 @@ function runRootCode(_options) {
     const context = {
         modules: {},
         getPackage: createPackageGetter(options.realPackages || [], options.packages),
-        globals: Object.assign({}, options.noDefaultGlobals || DEFAULT_GLOBALS, options.globals)
+        globals: Object.assign({}, options.noDefaultGlobals || DEFAULT_GLOBALS, options.globals),
+        timeout: options.timeout > 0 ? Number(options.timeout) : DEFAULT_TIMEOUT
     };
     const dir = path.resolve(options.root || '.');
     if (options.code !== undefined) {

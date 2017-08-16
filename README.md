@@ -85,6 +85,17 @@ execute({
 });
 ```
 
+### Control execution timeout
+
+```javascript
+execute({
+    code: `
+        doSomeLongRunningTask();
+    `,
+    timeout: 30
+});
+```
+
 ## License
 
   [MIT](LICENSE)
