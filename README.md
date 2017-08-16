@@ -7,7 +7,7 @@ Executes code in sandbox using `vm` package.
 ```javascript
 const execute = require('vmtx');
 
-assert.equal(execute('module.exports = 123'), 123);
+assert.equal(execute('123'), 123);
 ```
 
 ## Examples
@@ -17,14 +17,14 @@ assert.equal(execute('module.exports = 123'), 123);
 Path to file is resolved against working directory.
 
 ```javascript
-execute(`module.exports = require('./path/to/file')`);
+execute(`require('./path/to/file')`);
 ```
 
 But can also be resolved against custom directory.
 
 ```javascript
 execute({
-    code: `module.exports = require('./path/to/file')`,
+    code: `require('./path/to/file')`,
     root: './path/to/dir'
 });
 ```

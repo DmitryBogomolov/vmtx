@@ -37,7 +37,7 @@ function guessFileExtension(pathToFile) {
 }
 
 const PARSERS = {
-    '.js': runCode,
+    '.js': runFileCode,
     '.json': JSON.parse
 };
 
@@ -85,18 +85,23 @@ function loadModule(name, context, dir) {
     return obj.data;
 }
 
-function runCode(code, context, obj) {
+function runFileCode(code, context, obj) {
     const _exports = {};
     const _module = { exports: _exports };
-    const ctx = Object.assign(Object.create(null), context.globals, {
+    callVmRun(code, context, obj.dir, {
         exports: _exports,
         module: _module,
-        require: arg => loadModule(arg, context, obj.dir),
         __filename: obj.name,
         __dirname: obj.dir
     });
-    vm.runInNewContext(code, ctx, { timeout: context.timeout });
     return _exports === _module.exports ? _exports : _module.exports;
+}
+
+function callVmRun(code, context, dir, ctxFields) {
+    const ctx = Object.assign(Object.create(null), context.globals, {
+        require: arg => loadModule(arg, context, dir),
+    }, ctxFields);
+    return vm.runInNewContext(code, ctx, { timeout: context.timeout });
 }
 
 function createPackageGetter(realList, customMap) {
@@ -122,7 +127,7 @@ function runRootCode(_options) {
     };
     const dir = path.resolve(options.root || '.');
     if (options.code !== undefined) {
-        return runCode(options.code, context, { dir });
+        return callVmRun(options.code, context, dir);
     }
     if (options.file !== undefined) {
         return loadLocalModule(options.file, context, dir).data;

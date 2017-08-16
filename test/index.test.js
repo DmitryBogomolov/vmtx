@@ -4,21 +4,31 @@ const lib = require('../src/index');
 
 describe('Lib', () => {
     describe('exports', () => {
-        it('returns module.exports', () => {
-            const result = lib('module.exports = 10;');
+        it('returns last block result', () => {
+            const result = lib('10');
 
             expect(result).to.equal(10);
         });
 
-        it('returns exports', () => {
-            const result = lib(`
-                exports.a = 1;
-                exports.b = 2;
-            `);
+        it('executes code', () => {
+            const result = lib({
+                code: '20'
+            });
+
+            expect(result).to.equal(20);
+        });
+
+        it('executes file', () => {
+            const result = lib({
+                file: './test/data/tester-5'
+            });
 
             expect(result).to.deep.equal({
-                a: 1,
-                b: 2
+                a: 103,
+                b: {
+                    tag: 'test-data',
+                    test: 'Hello'
+                }
             });
         });
 
@@ -37,13 +47,13 @@ describe('Lib', () => {
 
     describe('loading files', () => {
         it('loads local .js file', () => {
-            const result = lib('module.exports = require("./test/data/tester-1.js");');
+            const result = lib('require("./test/data/tester-1.js");');
 
             expect(result).to.equal(102);
         });
 
         it('loads local .json file', () => {
-            const result = lib('module.exports = require("./test/data/tester-2.json");');
+            const result = lib('require("./test/data/tester-2.json");');
 
             expect(result).to.deep.equal({ tag: 'test-data' });
         });
@@ -59,19 +69,19 @@ describe('Lib', () => {
         });
 
         it('guesses .js file extension', () => {
-            const result = lib('module.exports = require("./test/data/tester-1");');
+            const result = lib('require("./test/data/tester-1");');
 
             expect(result).to.equal(102);
         });
 
         it('guesses .json file extension', () => {
-            const result = lib('module.exports = require("./test/data/tester-2");');
+            const result = lib('require("./test/data/tester-2");');
 
             expect(result).to.deep.equal({ tag: 'test-data' });
         });
 
         it('loads complex file', () => {
-            const result = lib('module.exports = require("./test/data/tester-3");');
+            const result = lib('require("./test/data/tester-3");');
 
             expect(result).to.deep.equal({
                 'tester-1': 102,
@@ -98,7 +108,7 @@ describe('Lib', () => {
             const result = lib(`
                 const obj = require('./test/data/tester-2');
                 require('./test/data/tester-4');
-                module.exports = obj;
+                obj;
             `);
 
             expect(result).to.deep.equal({
@@ -112,7 +122,7 @@ describe('Lib', () => {
                 const obj1 = require('test-package');
                 const obj2 = require('test-package');
                 obj2['test-change'] = 2;
-                module.exports = obj1;
+                obj1;
             `;
             const result = lib({
                 code,
@@ -128,43 +138,32 @@ describe('Lib', () => {
         });
 
         it('caches failed files', () => {
-            const result = lib(`
+            const code = `
                 try {
                     require('./test/no-file');
                 } catch (e) {
-                    exports.e1 = e;
+                    errors.e1 = e;
                 }
                 try {
                     require('./test/no-file');
                 } catch (e) {
-                    exports.e2 = e;
+                    errors.e2 = e;
                 }
-            `);
-
-            expect(result.e1).to.equal(result.e2);
-        });
-    });
-
-    describe('file execution', () => {
-        it('executes file instead of code', () => {
-            const result = lib({
-                file: './test/data/tester-5'
+            `;
+            const errors = {};
+            lib({
+                code,
+                globals: { errors }
             });
 
-            expect(result).to.deep.equal({
-                a: 103,
-                b: {
-                    tag: 'test-data',
-                    test: 'Hello'
-                }
-            });
+            expect(errors.e1).to.equal(errors.e2);
         });
     });
 
     describe('root dir', () => {
         it('allows to change root dir', () => {
             const result = lib({
-                code: 'module.exports = require("./tester-2");',
+                code: 'require("./tester-2");',
                 root: './test/data'
             });
 
@@ -177,21 +176,18 @@ describe('Lib', () => {
     describe('globals', () => {
         it('allows to define custom globals', () => {
             const result = lib({
-                code: `
-                    exports.a = a;
-                    exports.b = b;
-                `,
+                code: 'a + b',
                 globals: {
                     a: 1, b: 2
                 }
             });
 
-            expect(result).to.deep.equal({ a: 1, b: 2 });
+            expect(result).to.equal(3);
         });
 
         it('does not allow to redefine *module*, *exports* and *require*', () => {
             const result = lib({
-                code: 'module.exports = require("./test/data/tester-1");',
+                code: 'require("./test/data/tester-1");',
                 globals: {
                     module: 10,
                     exports: 'test',
@@ -290,7 +286,7 @@ describe('Lib', () => {
         it('stubs package', () => {
             const obj = { tag: 'test-package' };
             const result = lib({
-                code: 'module.exports = require("test-package");',
+                code: 'require("test-package");',
                 packages: {
                     'test-package': obj
                 }
@@ -310,7 +306,7 @@ describe('Lib', () => {
 
         it('uses real packages', () => {
             const result = lib({
-                code: 'module.exports = require("chai");',
+                code: 'require("chai");',
                 realPackages: ['chai']
             });
 
