@@ -149,23 +149,12 @@ describe('Lib', () => {
     });
 
     describe('globals', () => {
-        it('allows to define *console*', () => {
-            let arg = null;
-            lib({
-                code: 'console.log("Hello");',
-                globals: {
-                    console: {
-                        log: (message) => { arg = message; }
-                    }
-                }
-            });
-
-            expect(arg).to.equal('Hello');
-        });
-
         it('allows to define custom globals', () => {
             const result = lib({
-                code: 'exports.a = a; exports.b = b;',
+                code: `
+                    exports.a = a;
+                    exports.b = b;
+                `,
                 globals: {
                     a: 1, b: 2
                 }
@@ -187,28 +176,55 @@ describe('Lib', () => {
             expect(result).to.equal(102);
         });
 
-        it('provides several globals by default', () => {
-            const list = [
-                'Object', 'String', 'Number', 'Boolean', 'Array', 'Date', 'Buffer',
-                'Function', 'RegExp', 'Promise', 'Error',
-                'console',
-                'Map', 'Set', 'WeakMap', 'WeakSet',
-                'setTimeout', 'clearTimeout',
-                'setInterval', 'clearInterval',
-                'setImmediate', 'clearImmediate'
-            ];
-            const code = list.map(name => `exports._${name} = ${name};`).join('\n');
-            const result = lib(code);
-
-            list.forEach((name) => {
-                expect(result[`_${name}`]).to.equal(global[name]);
+        it('provides Buffer', () => {
+            const code = `
+                expect(Buffer.from('test').toString()).to.equal('test');
+            `;
+            lib({
+                code,
+                globals: { expect }
             });
         });
 
+        it('provides console', () => {
+            const code = `
+                expect(typeof console.log).to.equal('function');
+                expect(typeof console.error).to.equal('function');
+                expect(typeof console.warn).to.equal('function');
+            `;
+            lib({
+                code,
+                globals: { expect }
+            });
+        });
+
+        it('provides timeout, interval, immediate functions', () => {
+            const code = `
+                const timeout = setTimeout(() => 1, 1000);
+                clearTimeout(timeout);
+
+                const interval = setInterval(() => 1, 1000);
+                clearInterval(interval);
+
+                const immediate = setImmediate(() => 1, 1000);
+                clearImmediate(immediate);
+            `;
+            lib(code);
+        });
+
+        it('provides Map and Set classes', () => {
+            const code = `
+                new Map();
+                new Set();
+                new WeakMap();
+                new WeakSet();
+            `;
+            lib(code);
+        });
 
         it('does not provide *process*', () => {
             try {
-                lib('module.exports = process;');
+                lib('process.exit(0);');
                 expect(false).to.be.true;
             } catch (e) {
                 expect(e.message).to.equal('process is not defined');
@@ -218,7 +234,7 @@ describe('Lib', () => {
         it('disables default globals', () => {
             try {
                 lib({
-                    code: 'module.exports = Buffer;',
+                    code: 'new Buffer();',
                     noDefaultGlobals: true
                 });
                 expect(false).to.be.true;

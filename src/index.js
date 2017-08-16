@@ -8,10 +8,8 @@ const PARSERS = {
 };
 
 const DEFAULT_GLOBALS_LIST = [
-    'Object', 'String', 'Number', 'Boolean', 'Array', 'Date', 'Buffer',
-    'Function', 'RegExp', 'Promise', 'Error',
+    'Buffer',
     'console',
-    'Map', 'Set', 'WeakMap', 'WeakSet',
     'setTimeout', 'clearTimeout',
     'setInterval', 'clearInterval',
     'setImmediate', 'clearImmediate'
