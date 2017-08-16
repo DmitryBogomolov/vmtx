@@ -45,7 +45,7 @@ function loadLocalModule(name, context, dir) {
     const parseContent = PARSERS[path.extname(pathToFile)] || PARSERS['.js'];
     try {
         const content = fs.readFileSync(pathToFile, 'utf8');
-        obj.data = parseContent(content, context, obj.dir);
+        obj.data = parseContent(content, context, obj);
     } catch (e) {
         obj.error = e;
     }
@@ -76,13 +76,15 @@ function loadModule(name, context, dir) {
     return obj.data;
 }
 
-function runCode(code, context, dir) {
+function runCode(code, context, obj) {
     const _exports = {};
     const _module = { exports: _exports };
     vm.runInNewContext(code, Object.assign({}, context.globals, {
         exports: _exports,
         module: _module,
-        require: arg => loadModule(arg, context, dir)
+        require: arg => loadModule(arg, context, obj.dir),
+        __filename: obj.name,
+        __dirname: obj.dir
     }));
     return _exports === _module.exports ? _exports : _module.exports;
 }
@@ -109,7 +111,7 @@ function runRootCode(_options) {
     };
     const dir = path.resolve(options.root || '.');
     if (options.code !== undefined) {
-        return runCode(options.code, context, dir);
+        return runCode(options.code, context, { dir });
     }
     if (options.file !== undefined) {
         return loadLocalModule(options.file, context, dir).data;

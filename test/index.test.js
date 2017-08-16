@@ -1,4 +1,5 @@
 const { expect } = require('chai');
+const path = require('path');
 const lib = require('../src/index');
 
 describe('Lib', () => {
@@ -63,6 +64,19 @@ describe('Lib', () => {
             expect(result).to.deep.equal({
                 'tester-1': 102,
                 'tester-2': { tag: 'test-data' }
+            });
+        });
+
+        it('provides __filename and __dirname arguments', () => {
+            const result = lib({ file: './test/data/tester-7' });
+
+            expect(result).to.deep.equal({
+                dir: path.join(__dirname, './data'),
+                file: path.join(__dirname, './data/tester-7.js'),
+                next: {
+                    dir: path.join(__dirname, './data'),
+                    file: path.join(__dirname, './data/tester-6.js'),
+                }
             });
         });
     });
