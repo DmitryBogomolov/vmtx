@@ -86,7 +86,7 @@ function loadModule(name, context, dir) {
 function runCode(code, context, obj) {
     const _exports = {};
     const _module = { exports: _exports };
-    vm.runInNewContext(code, Object.assign({}, context.globals, {
+    vm.runInNewContext(code, Object.assign(Object.create(null), context.globals, {
         exports: _exports,
         module: _module,
         require: arg => loadModule(arg, context, obj.dir),

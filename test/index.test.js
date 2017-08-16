@@ -21,6 +21,18 @@ describe('Lib', () => {
                 b: 2
             });
         });
+
+        it('blocks access to real context', () => {
+            try {
+                lib(`
+                    this.constructor.constructor('return process')().assert(0);
+                `);
+                expect(false).to.be.true;
+            } catch (e) {
+                expect(e.message).to
+                    .equal('this.constructor.constructor(...)(...).assert is not a function');
+            }
+        });
     });
 
     describe('loading files', () => {
