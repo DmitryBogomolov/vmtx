@@ -78,7 +78,10 @@ function loadNodeModule(name, context) {
 function loadModule(name, context, dir) {
     const load = name.startsWith('/') || name.startsWith('.')
         ? loadLocalModule : loadNodeModule;
-    const obj = load(name, context, dir);
+    return returnLoadedModule(load(name, context, dir));
+}
+
+function returnLoadedModule(obj) {
     if (obj.error) {
         throw obj.error;
     }
@@ -130,7 +133,7 @@ function runRootCode(_options) {
         return callVmRun(options.code, context, dir);
     }
     if (options.file !== undefined) {
-        return loadLocalModule(options.file, context, dir).data;
+        return returnLoadedModule(loadLocalModule(options.file, context, dir));
     }
     throw new Error('Neiher *code* nor *file* is defined.');
 }

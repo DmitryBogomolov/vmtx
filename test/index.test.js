@@ -32,6 +32,26 @@ describe('Lib', () => {
             });
         });
 
+        it('fails when code execution fails', () => {
+            try {
+                lib(`
+                    throw new Error('test');
+                `);
+                expect(false).to.be.true;
+            } catch (e) {
+                expect(e.message).to.equal('test');
+            }
+        });
+
+        it('fails when file execution fails', () => {
+            try {
+                lib({ file: './no-file' });
+                expect(false).to.be.true;
+            } catch (e) {
+                expect(e.message.startsWith('ENOENT')).to.be.true;
+            }
+        });
+
         it('blocks access to real context', () => {
             try {
                 lib(`
