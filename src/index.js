@@ -14,7 +14,14 @@ const DEFAULT_GLOBALS_LIST = [
     'setInterval', 'clearInterval',
     'setImmediate', 'clearImmediate'
 ];
-const DEFAULT_GLOBALS = {};
+const DEFAULT_GLOBALS = {
+    process: {
+        nextTick: process.nextTick,
+        exit: (code) => {
+            throw new Error(code);
+        }
+    }
+};
 DEFAULT_GLOBALS_LIST.forEach((name) => {
     DEFAULT_GLOBALS[name] = global[name];
 });

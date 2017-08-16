@@ -236,12 +236,28 @@ describe('Lib', () => {
             lib(code);
         });
 
-        it('does not provide *process*', () => {
+        it('provides process.nextTick', () => {
+            lib(`
+                process.nextTick(() => 1);
+            `);
+        });
+
+        it('provides process.exit', () => {
+            const code = `
+                obj.a = 1;
+                process.exit();
+                obj.b = 2;
+            `;
+            const obj = {};
             try {
-                lib('process.exit(0);');
+                lib({
+                    code,
+                    globals: { obj }
+                });
                 expect(false).to.be.true;
             } catch (e) {
-                expect(e.message).to.equal('process is not defined');
+                expect(obj.a).to.equal(1);
+                expect(obj.b).to.be.undefined;
             }
         });
 
