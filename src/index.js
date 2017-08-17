@@ -4,6 +4,8 @@ const path = require('path');
 
 const DEFAULT_TIMEOUT = 60000;
 
+const INHERIT = Symbol('INHERIT');
+
 const DEFAULT_GLOBALS_LIST = [
     'Buffer',
     'console',
@@ -41,23 +43,39 @@ const PARSERS = {
     '.json': JSON.parse
 };
 
-function loadLocalModule(name, context, dir) {
-    const pathToFile = guessFileExtension(path.resolve(dir, name));
-    const cache = context.modules;
-    if (cache[pathToFile]) {
-        return cache[pathToFile];
-    }
-    const obj = cache[pathToFile] = {
-        name: pathToFile,
-        dir: path.dirname(pathToFile)
-    };
-    if (context.packages[pathToFile]) {
-        obj.data = context.packages[pathToFile];
+function loadModuleCore(name, context, dir) {
+    const cache = context.cache;
+    const isLocal = name.startsWith('/') || name.startsWith('.');
+    let moduleId = isLocal ? path.resolve(dir, name) : name;
+    let obj = cache[moduleId];
+    if (obj) {
         return obj;
     }
-    const parseContent = PARSERS[path.extname(pathToFile)] || PARSERS['.js'];
+    if (!isLocal) {
+        obj = cache[name] = { name };
+        if (context.inherited[name]) {
+            try {
+                obj.data = require(name);
+            } catch (e) {
+                obj.error = e;
+            }
+        } else {
+            obj.error = new Error(`Cannot find module '${name}'`);
+        }
+        return obj;
+    }
+    moduleId = guessFileExtension(moduleId);
+    obj = cache[moduleId];
+    if (obj) {
+        return obj;
+    }
+    obj = cache[moduleId] = {
+        name: moduleId,
+        dir: path.dirname(moduleId)
+    };
+    const parseContent = PARSERS[path.extname(moduleId)] || PARSERS['.js'];
     try {
-        const content = fs.readFileSync(pathToFile, 'utf8');
+        const content = fs.readFileSync(moduleId, 'utf8');
         obj.data = parseContent(content, context, obj);
     } catch (e) {
         obj.error = e;
@@ -65,27 +83,8 @@ function loadLocalModule(name, context, dir) {
     return obj;
 }
 
-function loadNodeModule(name, context) {
-    const cache = context.modules;
-    if (cache[name]) {
-        return cache[name];
-    }
-    const obj = cache[name] = { name };
-    try {
-        obj.data = context.getPackage(name);
-    } catch (e) {
-        obj.error = e;
-    }
-    return obj;
-}
-
-function loadModule(name, context, dir) {
-    const load = name.startsWith('/') || name.startsWith('.')
-        ? loadLocalModule : loadNodeModule;
-    return returnLoadedModule(load(name, context, dir));
-}
-
-function returnLoadedModule(obj) {
+function loadModule(...args) {
+    const obj = loadModuleCore(...args);
     if (obj.error) {
         throw obj.error;
     }
@@ -105,31 +104,33 @@ function runFileCode(code, context, obj) {
 }
 
 function callVmRun(code, context, dir, ctxFields) {
-    const ctx = Object.assign(Object.create(null), context.globals, {
-        require: arg => loadModule(arg, context, dir),
-    }, ctxFields);
+    const ctx = Object.assign(
+        Object.create(null),
+        context.globals,
+        {
+            require: name => loadModule(name, context, dir),
+        },
+        ctxFields
+    );
     return vm.runInNewContext(code, ctx, { timeout: context.timeout });
-}
-
-function createPackageGetter(realList, customMap) {
-    const cache = Object.assign({}, customMap);
-    return (name) => {
-        if (cache[name]) {
-            return cache[name];
-        } else if (realList.indexOf(name) >= 0) {
-            return (cache[name] = require(name));
-        } else {
-            throw new Error(`Cannot find module '${name}'`);
-        }
-    };
 }
 
 function runRootCode(_options) {
     const options = typeof _options === 'string' ? { code: _options } : _options;
+    const cache = {};
+    const modules = Object.assign({}, options.modules);
+    const inherited = {};
+    Object.keys(modules).forEach((name) => {
+        const data = modules[name];
+        if (data === INHERIT) {
+            inherited[name] = true;
+        } else {
+            cache[name] = { name, data };
+        }
+    });
     const context = {
-        modules: {},
-        packages: Object.assign({}, options.packages),
-        getPackage: createPackageGetter(options.realPackages || [], options.packages),
+        cache,
+        inherited,
         globals: Object.assign({}, options.noDefaultGlobals || DEFAULT_GLOBALS, options.globals),
         timeout: options.timeout > 0 ? Number(options.timeout) : DEFAULT_TIMEOUT
     };
@@ -138,9 +139,10 @@ function runRootCode(_options) {
         return callVmRun(options.code, context, dir);
     }
     if (options.file !== undefined) {
-        return returnLoadedModule(loadLocalModule(options.file, context, dir));
+        return loadModule(options.file, context, dir);
     }
     throw new Error('Neiher *code* nor *file* is defined.');
 }
 
+runRootCode.INHERIT = INHERIT;
 module.exports = runRootCode;

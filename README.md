@@ -56,7 +56,7 @@ execute({
 });
 ```
 
-### Use real packages
+### Inherit real modules
 
 ```javascript
 execute({
@@ -66,11 +66,14 @@ execute({
 
         fs.writeFile(path.resolve('./test.txt'), 'Hello', 'utf8');
     `,
-    realPackages: ['fs', 'path']
+    modules: {
+        fs: execute.INHERIT,
+        path: execute.INHERIT
+    }
 });
 ```
 
-### Provide custom packages
+### Provide custom modules
 
 ```javascript
 execute({
@@ -81,7 +84,7 @@ execute({
         console.log(myModule.myData);
         console.log(myFile.myData);
     `,
-    packages: {
+    modules: {
         'my-test': { myData: 'Hello module' },
         [path.resolve('./my-file')]: { myData: 'Hello file' }
     }
@@ -93,7 +96,7 @@ execute({
 ```javascript
 execute({
     code: `
-        doSomeLongRunningTask();
+        doSomeLongRunningTask()
     `,
     timeout: 30
 });

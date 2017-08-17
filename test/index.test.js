@@ -3,6 +3,10 @@ const path = require('path');
 const lib = require('../src/index');
 
 describe('Lib', () => {
+    function fail() {
+        throw new Error('It should not be called!');
+    }
+
     describe('exports', () => {
         it('returns last block result', () => {
             const result = lib('10');
@@ -37,7 +41,7 @@ describe('Lib', () => {
                 lib(`
                     throw new Error('test');
                 `);
-                expect(false).to.be.true;
+                fail();
             } catch (e) {
                 expect(e.message).to.equal('test');
             }
@@ -46,9 +50,9 @@ describe('Lib', () => {
         it('fails when file execution fails', () => {
             try {
                 lib({ file: './no-file' });
-                expect(false).to.be.true;
+                fail();
             } catch (e) {
-                expect(e.message.startsWith('ENOENT')).to.be.true;
+                expect(e.message.startsWith('ENOENT: no such file or directory')).to.be.true;
             }
         });
 
@@ -57,7 +61,7 @@ describe('Lib', () => {
                 lib(`
                     this.constructor.constructor('return process')().assert(0);
                 `);
-                expect(false).to.be.true;
+                fail();
             } catch (e) {
                 expect(e.message).to
                     .equal('this.constructor.constructor(...)(...).assert is not a function');
@@ -79,13 +83,12 @@ describe('Lib', () => {
         });
 
         it('fails when local file is not found', () => {
-            let isThrown = false;
             try {
                 lib('require("./test/data/no-file.js");');
-            } catch (_) {
-                isThrown = true;
+                fail();
+            } catch (e) {
+                expect(e.message.startsWith('ENOENT: no such file or directory')).to.be.true;
             }
-            expect(isThrown).to.be.true;
         });
 
         it('guesses .js file extension', () => {
@@ -146,7 +149,7 @@ describe('Lib', () => {
             `;
             const result = lib({
                 code,
-                packages: {
+                modules: {
                     'test-package': { tag: 'test-package' }
                 }
             });
@@ -282,7 +285,7 @@ describe('Lib', () => {
                     code,
                     globals: { obj }
                 });
-                expect(false).to.be.true;
+                fail();
             } catch (e) {
                 expect(obj.a).to.equal(1);
                 expect(obj.b).to.be.undefined;
@@ -295,19 +298,19 @@ describe('Lib', () => {
                     code: 'new Buffer();',
                     noDefaultGlobals: true
                 });
-                expect(false).to.be.true;
+                fail();
             } catch (e) {
                 expect(e.message).to.equal('Buffer is not defined');
             }
         });
     });
 
-    describe('loading packages', () => {
-        it('stubs package', () => {
+    describe('loading modules', () => {
+        it('stubs module', () => {
             const obj = { tag: 'test-package' };
             const result = lib({
                 code: 'require("test-package");',
-                packages: {
+                modules: {
                     'test-package': obj
                 }
             });
@@ -319,7 +322,7 @@ describe('Lib', () => {
             const obj = { tag: 'test-file' };
             const result = lib({
                 code: 'require("./test-file");',
-                packages: {
+                modules: {
                     [path.resolve('./test-file')]: obj
                 }
             });
@@ -327,19 +330,20 @@ describe('Lib', () => {
             expect(result).to.equal(obj);
         });
 
-        it('fails on not found package', () => {
+        it('fails on not-found module', () => {
             try {
                 lib('require("test");');
-                expect(false).to.be.true;
             } catch (e) {
                 expect(e.message).to.equal('Cannot find module \'test\'');
             }
         });
 
-        it('uses real packages', () => {
+        it('inherits modules', () => {
             const result = lib({
                 code: 'require("chai");',
-                realPackages: ['chai']
+                modules: {
+                    chai: lib.INHERIT
+                }
             });
 
             expect(result.expect).to.equal(expect);
