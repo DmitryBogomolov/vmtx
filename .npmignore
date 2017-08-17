@@ -1,4 +1,5 @@
 .npmignore
 test
+examples
 .eslintrc.json
 .travis.yml

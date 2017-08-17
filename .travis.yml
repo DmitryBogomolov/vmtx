@@ -6,7 +6,9 @@ install:
   - npm i
 script:
   - npm run lint
-  - npm test
+  - npm run test-ci
+after_script:
+  - npm run coveralls
 cache:
   directories:
-    - "node_modules"
+    - node_modules

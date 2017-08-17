@@ -7,7 +7,7 @@ describe('Lib', () => {
         throw new Error('It should not be called!');
     }
 
-    describe('exports', () => {
+    describe('basics', () => {
         it('returns last block result', () => {
             const result = lib('10');
 
@@ -34,6 +34,15 @@ describe('Lib', () => {
                     test: 'Hello'
                 }
             });
+        });
+
+        it('fails when nether code nor file is provided', () => {
+            try {
+                lib({});
+                fail();
+            } catch (e) {
+                expect(e.message).to.equal('Neiher *code* nor *file* is defined.');
+            }
         });
 
         it('fails when code execution fails', () => {
@@ -66,6 +75,15 @@ describe('Lib', () => {
                 expect(e.message).to
                     .equal('this.constructor.constructor(...)(...).assert is not a function');
             }
+        });
+
+        it('sets execution timeout', () => {
+            const result = lib({
+                code: '10',
+                timeout: 3
+            });
+
+            expect(result).to.equal(10);
         });
     });
 
@@ -347,6 +365,20 @@ describe('Lib', () => {
             });
 
             expect(result.expect).to.equal(expect);
+        });
+
+        it('handles error for inherited modules', () => {
+            try {
+                lib({
+                    code: 'require("not-found");',
+                    modules: {
+                        'not-found': lib.INHERIT
+                    }
+                });
+                fail();
+            } catch (e) {
+                expect(e.message).to.equal('Cannot find module \'not-found\'');
+            }
         });
     });
 });

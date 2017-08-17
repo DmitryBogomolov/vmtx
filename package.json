@@ -5,7 +5,9 @@
   "main": "./src/index.js",
   "scripts": {
     "test": "mocha",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test-ci": "istanbul cover ./node_modules/mocha/bin/_mocha",
+    "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "author": "Dmitry Bogomolov",
   "license": "MIT",
@@ -19,7 +21,9 @@
   "homepage": "https://github.com/DmitryBogomolov/vmtx",
   "devDependencies": {
     "chai": "^4.1.1",
+    "coveralls": "^2.13.1",
     "eslint": "^4.4.1",
+    "istanbul": "^0.4.5",
     "mocha": "^3.5.0"
   },
   "keywords": [

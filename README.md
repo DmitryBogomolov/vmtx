@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/DmitryBogomolov/vmtx.svg?branch=master)](https://travis-ci.org/DmitryBogomolov/vmtx)
 
+[![Coverage Status](https://coveralls.io/repos/github/DmitryBogomolov/vmtx/badge.svg?branch=master)](https://coveralls.io/github/DmitryBogomolov/vmtx?branch=master)
+
 Executes code in sandbox using `vm` package.
 
 ```javascript
