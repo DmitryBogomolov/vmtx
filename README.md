@@ -7,7 +7,7 @@ Executes code in sandbox using `vm` package.
 ```javascript
 const execute = require('vmtx');
 
-assert.equal(execute('module.exports = 123'), 123);
+assert.equal(execute('123'), 123);
 ```
 
 ## Examples
@@ -17,14 +17,14 @@ assert.equal(execute('module.exports = 123'), 123);
 Path to file is resolved against working directory.
 
 ```javascript
-execute(`module.exports = require('./path/to/file')`);
+execute(`require('./path/to/file')`);
 ```
 
 But can also be resolved against custom directory.
 
 ```javascript
 execute({
-    code: `module.exports = require('./path/to/file')`,
+    code: `require('./path/to/file')`,
     root: './path/to/dir'
 });
 ```
@@ -56,7 +56,7 @@ execute({
 });
 ```
 
-### Use real packages
+### Inherit real modules
 
 ```javascript
 execute({
@@ -66,22 +66,39 @@ execute({
 
         fs.writeFile(path.resolve('./test.txt'), 'Hello', 'utf8');
     `,
-    realPackages: ['fs', 'path']
+    modules: {
+        fs: execute.INHERIT,
+        path: execute.INHERIT
+    }
 });
 ```
 
-### Provide custom (stub) packages
+### Provide custom modules
 
 ```javascript
 execute({
     code: `
-        const myTest = require('my-test');
+        const myModule = require('my-test');
+        const myFile = require('./my-file');
 
-        console.log(myTest.myData);
+        console.log(myModule.myData);
+        console.log(myFile.myData);
     `,
-    packages: {
-        'my-test': { myData: 'Hello' }
+    modules: {
+        'my-test': { myData: 'Hello module' },
+        [path.resolve('./my-file')]: { myData: 'Hello file' }
     }
+});
+```
+
+### Control execution timeout
+
+```javascript
+execute({
+    code: `
+        doSomeLongRunningTask()
+    `,
+    timeout: 30
 });
 ```
 

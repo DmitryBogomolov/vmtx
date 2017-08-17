@@ -1,68 +1,127 @@
 const { expect } = require('chai');
+const path = require('path');
 const lib = require('../src/index');
 
 describe('Lib', () => {
+    function fail() {
+        throw new Error('It should not be called!');
+    }
+
     describe('exports', () => {
-        it('returns module.exports', () => {
-            const result = lib('module.exports = 10;');
+        it('returns last block result', () => {
+            const result = lib('10');
 
             expect(result).to.equal(10);
         });
 
-        it('returns exports', () => {
-            const result = lib(`
-                exports.a = 1;
-                exports.b = 2;
-            `);
+        it('executes code', () => {
+            const result = lib({
+                code: '20'
+            });
+
+            expect(result).to.equal(20);
+        });
+
+        it('executes file', () => {
+            const result = lib({
+                file: './test/data/tester-5'
+            });
 
             expect(result).to.deep.equal({
-                a: 1,
-                b: 2
+                a: 103,
+                b: {
+                    tag: 'test-data',
+                    test: 'Hello'
+                }
             });
+        });
+
+        it('fails when code execution fails', () => {
+            try {
+                lib(`
+                    throw new Error('test');
+                `);
+                fail();
+            } catch (e) {
+                expect(e.message).to.equal('test');
+            }
+        });
+
+        it('fails when file execution fails', () => {
+            try {
+                lib({ file: './no-file' });
+                fail();
+            } catch (e) {
+                expect(e.message.startsWith('ENOENT: no such file or directory')).to.be.true;
+            }
+        });
+
+        it('blocks access to real context', () => {
+            try {
+                lib(`
+                    this.constructor.constructor('return process')().assert(0);
+                `);
+                fail();
+            } catch (e) {
+                expect(e.message).to
+                    .equal('this.constructor.constructor(...)(...).assert is not a function');
+            }
         });
     });
 
     describe('loading files', () => {
         it('loads local .js file', () => {
-            const result = lib('module.exports = require("./test/data/tester-1.js");');
+            const result = lib('require("./test/data/tester-1.js");');
 
             expect(result).to.equal(102);
         });
 
         it('loads local .json file', () => {
-            const result = lib('module.exports = require("./test/data/tester-2.json");');
+            const result = lib('require("./test/data/tester-2.json");');
 
             expect(result).to.deep.equal({ tag: 'test-data' });
         });
 
         it('fails when local file is not found', () => {
-            let isThrown = false;
             try {
                 lib('require("./test/data/no-file.js");');
-            } catch (_) {
-                isThrown = true;
+                fail();
+            } catch (e) {
+                expect(e.message.startsWith('ENOENT: no such file or directory')).to.be.true;
             }
-            expect(isThrown).to.be.true;
         });
 
         it('guesses .js file extension', () => {
-            const result = lib('module.exports = require("./test/data/tester-1");');
+            const result = lib('require("./test/data/tester-1");');
 
             expect(result).to.equal(102);
         });
 
         it('guesses .json file extension', () => {
-            const result = lib('module.exports = require("./test/data/tester-2");');
+            const result = lib('require("./test/data/tester-2");');
 
             expect(result).to.deep.equal({ tag: 'test-data' });
         });
 
         it('loads complex file', () => {
-            const result = lib('module.exports = require("./test/data/tester-3");');
+            const result = lib('require("./test/data/tester-3");');
 
             expect(result).to.deep.equal({
                 'tester-1': 102,
                 'tester-2': { tag: 'test-data' }
+            });
+        });
+
+        it('provides __filename and __dirname arguments', () => {
+            const result = lib({ file: './test/data/tester-7' });
+
+            expect(result).to.deep.equal({
+                dir: path.join(__dirname, './data'),
+                file: path.join(__dirname, './data/tester-7.js'),
+                next: {
+                    dir: path.join(__dirname, './data'),
+                    file: path.join(__dirname, './data/tester-6.js'),
+                }
             });
         });
     });
@@ -72,7 +131,7 @@ describe('Lib', () => {
             const result = lib(`
                 const obj = require('./test/data/tester-2');
                 require('./test/data/tester-4');
-                module.exports = obj;
+                obj;
             `);
 
             expect(result).to.deep.equal({
@@ -86,11 +145,11 @@ describe('Lib', () => {
                 const obj1 = require('test-package');
                 const obj2 = require('test-package');
                 obj2['test-change'] = 2;
-                module.exports = obj1;
+                obj1;
             `;
             const result = lib({
                 code,
-                packages: {
+                modules: {
                     'test-package': { tag: 'test-package' }
                 }
             });
@@ -102,43 +161,32 @@ describe('Lib', () => {
         });
 
         it('caches failed files', () => {
-            const result = lib(`
+            const code = `
                 try {
                     require('./test/no-file');
                 } catch (e) {
-                    exports.e1 = e;
+                    errors.e1 = e;
                 }
                 try {
                     require('./test/no-file');
                 } catch (e) {
-                    exports.e2 = e;
+                    errors.e2 = e;
                 }
-            `);
-
-            expect(result.e1).to.equal(result.e2);
-        });
-    });
-
-    describe('file execution', () => {
-        it('executes file instead of code', () => {
-            const result = lib({
-                file: './test/data/tester-5'
+            `;
+            const errors = {};
+            lib({
+                code,
+                globals: { errors }
             });
 
-            expect(result).to.deep.equal({
-                a: 103,
-                b: {
-                    tag: 'test-data',
-                    test: 'Hello'
-                }
-            });
+            expect(errors.e1).to.equal(errors.e2);
         });
     });
 
     describe('root dir', () => {
         it('allows to change root dir', () => {
             const result = lib({
-                code: 'module.exports = require("./tester-2");',
+                code: 'require("./tester-2");',
                 root: './test/data'
             });
 
@@ -149,34 +197,20 @@ describe('Lib', () => {
     });
 
     describe('globals', () => {
-        it('allows to define *console*', () => {
-            let arg = null;
-            lib({
-                code: 'console.log("Hello");',
-                globals: {
-                    console: {
-                        log: (message) => { arg = message; }
-                    }
-                }
-            });
-
-            expect(arg).to.equal('Hello');
-        });
-
         it('allows to define custom globals', () => {
             const result = lib({
-                code: 'exports.a = a; exports.b = b;',
+                code: 'a + b',
                 globals: {
                     a: 1, b: 2
                 }
             });
 
-            expect(result).to.deep.equal({ a: 1, b: 2 });
+            expect(result).to.equal(3);
         });
 
         it('does not allow to redefine *module*, *exports* and *require*', () => {
             const result = lib({
-                code: 'module.exports = require("./test/data/tester-1");',
+                code: 'require("./test/data/tester-1");',
                 globals: {
                     module: 10,
                     exports: 'test',
@@ -187,53 +221,96 @@ describe('Lib', () => {
             expect(result).to.equal(102);
         });
 
-        it('provides several globals by default', () => {
-            const list = [
-                'Object', 'String', 'Number', 'Boolean', 'Array', 'Date', 'Buffer',
-                'Function', 'RegExp', 'Promise', 'Error',
-                'console',
-                'Map', 'Set', 'WeakMap', 'WeakSet',
-                'setTimeout', 'clearTimeout',
-                'setInterval', 'clearInterval',
-                'setImmediate', 'clearImmediate'
-            ];
-            const code = list.map(name => `exports._${name} = ${name};`).join('\n');
-            const result = lib(code);
-
-            list.forEach((name) => {
-                expect(result[`_${name}`]).to.equal(global[name]);
+        it('provides Buffer', () => {
+            const code = `
+                expect(Buffer.from('test').toString()).to.equal('test');
+            `;
+            lib({
+                code,
+                globals: { expect }
             });
         });
 
+        it('provides console', () => {
+            const code = `
+                expect(typeof console.log).to.equal('function');
+                expect(typeof console.error).to.equal('function');
+                expect(typeof console.warn).to.equal('function');
+            `;
+            lib({
+                code,
+                globals: { expect }
+            });
+        });
 
-        it('does not provide *process*', () => {
+        it('provides timeout, interval, immediate functions', () => {
+            const code = `
+                const timeout = setTimeout(() => 1, 1000);
+                clearTimeout(timeout);
+
+                const interval = setInterval(() => 1, 1000);
+                clearInterval(interval);
+
+                const immediate = setImmediate(() => 1, 1000);
+                clearImmediate(immediate);
+            `;
+            lib(code);
+        });
+
+        it('provides Map and Set classes', () => {
+            const code = `
+                new Map();
+                new Set();
+                new WeakMap();
+                new WeakSet();
+            `;
+            lib(code);
+        });
+
+        it('provides process.nextTick', () => {
+            lib(`
+                process.nextTick(() => 1);
+            `);
+        });
+
+        it('provides process.exit', () => {
+            const code = `
+                obj.a = 1;
+                process.exit();
+                obj.b = 2;
+            `;
+            const obj = {};
             try {
-                lib('module.exports = process;');
-                expect(false).to.be.true;
+                lib({
+                    code,
+                    globals: { obj }
+                });
+                fail();
             } catch (e) {
-                expect(e.message).to.equal('process is not defined');
+                expect(obj.a).to.equal(1);
+                expect(obj.b).to.be.undefined;
             }
         });
 
         it('disables default globals', () => {
             try {
                 lib({
-                    code: 'module.exports = Buffer;',
+                    code: 'new Buffer();',
                     noDefaultGlobals: true
                 });
-                expect(false).to.be.true;
+                fail();
             } catch (e) {
                 expect(e.message).to.equal('Buffer is not defined');
             }
         });
     });
 
-    describe('loading packages', () => {
-        it('stubs package', () => {
+    describe('loading modules', () => {
+        it('stubs module', () => {
             const obj = { tag: 'test-package' };
             const result = lib({
-                code: 'module.exports = require("test-package");',
-                packages: {
+                code: 'require("test-package");',
+                modules: {
                     'test-package': obj
                 }
             });
@@ -241,19 +318,32 @@ describe('Lib', () => {
             expect(result).to.equal(obj);
         });
 
-        it('fails on not found package', () => {
+        it('stubs file', () => {
+            const obj = { tag: 'test-file' };
+            const result = lib({
+                code: 'require("./test-file");',
+                modules: {
+                    [path.resolve('./test-file')]: obj
+                }
+            });
+
+            expect(result).to.equal(obj);
+        });
+
+        it('fails on not-found module', () => {
             try {
                 lib('require("test");');
-                expect(false).to.be.true;
             } catch (e) {
                 expect(e.message).to.equal('Cannot find module \'test\'');
             }
         });
 
-        it('uses real packages', () => {
+        it('inherits modules', () => {
             const result = lib({
-                code: 'module.exports = require("chai");',
-                realPackages: ['chai']
+                code: 'require("chai");',
+                modules: {
+                    chai: lib.INHERIT
+                }
             });
 
             expect(result.expect).to.equal(expect);

@@ -2,21 +2,25 @@ const vm = require('vm');
 const fs = require('fs');
 const path = require('path');
 
-const PARSERS = {
-    '.js': runCode,
-    '.json': JSON.parse
-};
+const DEFAULT_TIMEOUT = 60000;
+
+const INHERIT = Symbol('INHERIT');
 
 const DEFAULT_GLOBALS_LIST = [
-    'Object', 'String', 'Number', 'Boolean', 'Array', 'Date', 'Buffer',
-    'Function', 'RegExp', 'Promise', 'Error',
+    'Buffer',
     'console',
-    'Map', 'Set', 'WeakMap', 'WeakSet',
     'setTimeout', 'clearTimeout',
     'setInterval', 'clearInterval',
     'setImmediate', 'clearImmediate'
 ];
-const DEFAULT_GLOBALS = {};
+const DEFAULT_GLOBALS = {
+    process: {
+        nextTick: process.nextTick,
+        exit: (code) => {
+            throw new Error(code);
+        }
+    }
+};
 DEFAULT_GLOBALS_LIST.forEach((name) => {
     DEFAULT_GLOBALS[name] = global[name];
 });
@@ -34,89 +38,111 @@ function guessFileExtension(pathToFile) {
         || checkFileExists(pathToFile, '.json') || pathToFile;
 }
 
-function loadLocalModule(name, context, dir) {
-    const pathToFile = guessFileExtension(path.resolve(dir, name));
-    const cache = context.modules;
-    if (cache[pathToFile]) {
-        return cache[pathToFile];
+const PARSERS = {
+    '.js': runFileCode,
+    '.json': JSON.parse
+};
+
+function loadModuleCore(name, context, dir) {
+    const cache = context.cache;
+    const isLocal = name.startsWith('/') || name.startsWith('.');
+    let moduleId = isLocal ? path.resolve(dir, name) : name;
+    let obj = cache[moduleId];
+    if (obj) {
+        return obj;
     }
-    const obj = cache[pathToFile] = {
-        name: pathToFile,
-        dir: path.dirname(pathToFile)
+    if (!isLocal) {
+        obj = cache[name] = { name };
+        if (context.inherited[name]) {
+            try {
+                obj.data = require(name);
+            } catch (e) {
+                obj.error = e;
+            }
+        } else {
+            obj.error = new Error(`Cannot find module '${name}'`);
+        }
+        return obj;
+    }
+    moduleId = guessFileExtension(moduleId);
+    obj = cache[moduleId];
+    if (obj) {
+        return obj;
+    }
+    obj = cache[moduleId] = {
+        name: moduleId,
+        dir: path.dirname(moduleId)
     };
-    const parseContent = PARSERS[path.extname(pathToFile)] || PARSERS['.js'];
+    const parseContent = PARSERS[path.extname(moduleId)] || PARSERS['.js'];
     try {
-        const content = fs.readFileSync(pathToFile, 'utf8');
-        obj.data = parseContent(content, context, obj.dir);
+        const content = fs.readFileSync(moduleId, 'utf8');
+        obj.data = parseContent(content, context, obj);
     } catch (e) {
         obj.error = e;
     }
     return obj;
 }
 
-function loadNodeModule(name, context) {
-    const cache = context.modules;
-    if (cache[name]) {
-        return cache[name];
-    }
-    const obj = cache[name] = { name };
-    try {
-        obj.data = context.getPackage(name);
-    } catch (e) {
-        obj.error = e;
-    }
-    return obj;
-}
-
-function loadModule(name, context, dir) {
-    const load = name.startsWith('/') || name.startsWith('.')
-        ? loadLocalModule : loadNodeModule;
-    const obj = load(name, context, dir);
+function loadModule(...args) {
+    const obj = loadModuleCore(...args);
     if (obj.error) {
         throw obj.error;
     }
     return obj.data;
 }
 
-function runCode(code, context, dir) {
+function runFileCode(code, context, obj) {
     const _exports = {};
     const _module = { exports: _exports };
-    vm.runInNewContext(code, Object.assign({}, context.globals, {
+    callVmRun(code, context, obj.dir, {
         exports: _exports,
         module: _module,
-        require: arg => loadModule(arg, context, dir)
-    }));
+        __filename: obj.name,
+        __dirname: obj.dir
+    });
     return _exports === _module.exports ? _exports : _module.exports;
 }
 
-function createPackageGetter(realList, customMap) {
-    const cache = Object.assign({}, customMap);
-    return (name) => {
-        if (cache[name]) {
-            return cache[name];
-        } else if (realList.indexOf(name) >= 0) {
-            return (cache[name] = require(name));
-        } else {
-            throw new Error(`Cannot find module '${name}'`);
-        }
-    };
+function callVmRun(code, context, dir, ctxFields) {
+    const ctx = Object.assign(
+        Object.create(null),
+        context.globals,
+        {
+            require: name => loadModule(name, context, dir),
+        },
+        ctxFields
+    );
+    return vm.runInNewContext(code, ctx, { timeout: context.timeout });
 }
 
 function runRootCode(_options) {
     const options = typeof _options === 'string' ? { code: _options } : _options;
+    const cache = {};
+    const modules = Object.assign({}, options.modules);
+    const inherited = {};
+    Object.keys(modules).forEach((name) => {
+        const data = modules[name];
+        if (data === INHERIT) {
+            inherited[name] = true;
+        } else {
+            cache[name] = { name, data };
+        }
+    });
     const context = {
-        modules: {},
-        getPackage: createPackageGetter(options.realPackages || [], options.packages),
-        globals: Object.assign({}, options.noDefaultGlobals || DEFAULT_GLOBALS, options.globals)
+        cache,
+        inherited,
+        globals: Object.assign({}, options.noDefaultGlobals || DEFAULT_GLOBALS, options.globals),
+        timeout: options.timeout > 0 ? Number(options.timeout) : DEFAULT_TIMEOUT
     };
     const dir = path.resolve(options.root || '.');
     if (options.code !== undefined) {
-        return runCode(options.code, context, dir);
+        return callVmRun(options.code, context, dir);
     }
     if (options.file !== undefined) {
-        return loadLocalModule(options.file, context, dir).data;
+        return loadModule(options.file, context, dir);
     }
     throw new Error('Neiher *code* nor *file* is defined.');
 }
 
+runRootCode.INHERIT = INHERIT;
 module.exports = runRootCode;

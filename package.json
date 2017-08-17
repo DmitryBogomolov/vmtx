@@ -4,7 +4,7 @@
   "description": "Executes code in sandbox using 'vm' package",
   "main": "./src/index.js",
   "scripts": {
-    "test": "mocha --full-trace -c -R spec",
+    "test": "mocha",
     "lint": "eslint ."
   },
   "author": "Dmitry Bogomolov",
