@@ -70,17 +70,20 @@ execute({
 });
 ```
 
-### Provide custom (stub) packages
+### Provide custom packages
 
 ```javascript
 execute({
     code: `
-        const myTest = require('my-test');
+        const myModule = require('my-test');
+        const myFile = require('./my-file');
 
-        console.log(myTest.myData);
+        console.log(myModule.myData);
+        console.log(myFile.myData);
     `,
     packages: {
-        'my-test': { myData: 'Hello' }
+        'my-test': { myData: 'Hello module' },
+        [path.resolve('./my-file')]: { myData: 'Hello file' }
     }
 });
 ```

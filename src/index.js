@@ -51,6 +51,10 @@ function loadLocalModule(name, context, dir) {
         name: pathToFile,
         dir: path.dirname(pathToFile)
     };
+    if (context.packages[pathToFile]) {
+        obj.data = context.packages[pathToFile];
+        return obj;
+    }
     const parseContent = PARSERS[path.extname(pathToFile)] || PARSERS['.js'];
     try {
         const content = fs.readFileSync(pathToFile, 'utf8');
@@ -124,6 +128,7 @@ function runRootCode(_options) {
     const options = typeof _options === 'string' ? { code: _options } : _options;
     const context = {
         modules: {},
+        packages: Object.assign({}, options.packages),
         getPackage: createPackageGetter(options.realPackages || [], options.packages),
         globals: Object.assign({}, options.noDefaultGlobals || DEFAULT_GLOBALS, options.globals),
         timeout: options.timeout > 0 ? Number(options.timeout) : DEFAULT_TIMEOUT

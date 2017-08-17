@@ -315,6 +315,18 @@ describe('Lib', () => {
             expect(result).to.equal(obj);
         });
 
+        it('stubs file', () => {
+            const obj = { tag: 'test-file' };
+            const result = lib({
+                code: 'require("./test-file");',
+                packages: {
+                    [path.resolve('./test-file')]: obj
+                }
+            });
+
+            expect(result).to.equal(obj);
+        });
+
         it('fails on not found package', () => {
             try {
                 lib('require("test");');
