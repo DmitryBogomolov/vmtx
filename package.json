@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha",
     "lint": "eslint .",
-    "test-ci": "istanbul cover ./node_modules/mocha/bin/_mocha --report lcovonly",
+    "test-ci": "istanbul cover ./node_modules/mocha/bin/_mocha",
     "coveralls": "cat ./coverage/lcov.info | coveralls"
   },
   "author": "Dmitry Bogomolov",
