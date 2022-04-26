@@ -1,6 +1,6 @@
 # vmtx
 
-[![Build Status](https://travis-ci.org/DmitryBogomolov/vmtx.svg?branch=master)](https://travis-ci.org/DmitryBogomolov/vmtx)
+[![CI](https://github.com/DmitryBogomolov/vmtx/actions/workflows/ci.yml/badge.svg)](https://github.com/DmitryBogomolov/vmtx/actions/workflows/ci.yml)
 
 [![Coverage Status](https://coveralls.io/repos/github/DmitryBogomolov/vmtx/badge.svg?branch=master)](https://coveralls.io/github/DmitryBogomolov/vmtx?branch=master)
 
