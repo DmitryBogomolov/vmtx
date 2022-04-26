@@ -377,7 +377,8 @@ describe('Lib', () => {
                 });
                 fail();
             } catch (e) {
-                expect(e.message).to.equal('Cannot find module \'not-found\'');
+                const firstLine = e.message.split('\n')[0];
+                expect(firstLine).to.equal('Cannot find module \'not-found\'');
             }
         });
     });
