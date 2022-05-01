@@ -108,7 +108,7 @@ function callVmRun(code, context, dir, ctxFields) {
         Object.create(null),
         context.globals,
         {
-            require: name => loadModule(name, context, dir),
+            require: (name) => loadModule(name, context, dir),
         },
         ctxFields,
     );
