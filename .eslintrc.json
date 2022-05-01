@@ -2,16 +2,25 @@
     "env": {
         "node": true,
         "commonjs": true,
-        "es6": true
+        "es6": true,
+        "mocha": true
     },
     "extends": "eslint:recommended",
     "parserOptions": {
-        "sourceType": "module"
+        "ecmaVersion": 8
     },
     "rules": {
         "indent": [
             "error",
             4
+        ],
+        "no-multi-spaces": "error",
+        "key-spacing": "error",
+        "keyword-spacing": "error",
+        "func-call-spacing": "error",
+        "space-before-function-paren": [
+            "error",
+            { "anonymous": "always", "named": "never", "asyncArrow": "always" }
         ],
         "linebreak-style": [
             "error",
@@ -24,6 +33,10 @@
         "semi": [
             "error",
             "always"
+        ],
+        "comma-dangle": [
+            "error",
+            "always-multiline"
         ]
     }
 }
