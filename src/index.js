@@ -11,15 +11,15 @@ const DEFAULT_GLOBALS_LIST = [
     'console',
     'setTimeout', 'clearTimeout',
     'setInterval', 'clearInterval',
-    'setImmediate', 'clearImmediate'
+    'setImmediate', 'clearImmediate',
 ];
 const DEFAULT_GLOBALS = {
     process: {
         nextTick: process.nextTick,
         exit: (code) => {
             throw new Error(code);
-        }
-    }
+        },
+    },
 };
 DEFAULT_GLOBALS_LIST.forEach((name) => {
     DEFAULT_GLOBALS[name] = global[name];
@@ -40,7 +40,7 @@ function guessFileExtension(pathToFile) {
 
 const PARSERS = {
     '.js': runFileCode,
-    '.json': JSON.parse
+    '.json': JSON.parse,
 };
 
 function loadModuleCore(name, context, dir) {
@@ -71,7 +71,7 @@ function loadModuleCore(name, context, dir) {
     }
     obj = cache[moduleId] = {
         name: moduleId,
-        dir: path.dirname(moduleId)
+        dir: path.dirname(moduleId),
     };
     const parseContent = PARSERS[path.extname(moduleId)] || PARSERS['.js'];
     try {
@@ -98,7 +98,7 @@ function runFileCode(code, context, obj) {
         exports: _exports,
         module: _module,
         __filename: obj.name,
-        __dirname: obj.dir
+        __dirname: obj.dir,
     });
     return _exports === _module.exports ? _exports : _module.exports;
 }
@@ -110,7 +110,7 @@ function callVmRun(code, context, dir, ctxFields) {
         {
             require: name => loadModule(name, context, dir),
         },
-        ctxFields
+        ctxFields,
     );
     return vm.runInNewContext(code, ctx, { timeout: context.timeout });
 }
@@ -132,7 +132,7 @@ function runRootCode(_options) {
         cache,
         inherited,
         globals: Object.assign({}, options.noDefaultGlobals || DEFAULT_GLOBALS, options.globals),
-        timeout: options.timeout > 0 ? Number(options.timeout) : DEFAULT_TIMEOUT
+        timeout: options.timeout > 0 ? Number(options.timeout) : DEFAULT_TIMEOUT,
     };
     const dir = path.resolve(options.root || '.');
     if (options.code !== undefined) {

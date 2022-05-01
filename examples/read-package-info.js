@@ -10,5 +10,5 @@ const result = vmtx(`
 
 expect(result).to.deep.equal({
     name: 'vmtx',
-    license: 'MIT'
+    license: 'MIT',
 });

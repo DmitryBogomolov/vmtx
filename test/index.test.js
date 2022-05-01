@@ -16,7 +16,7 @@ describe('Lib', () => {
 
         it('executes code', () => {
             const result = lib({
-                code: '20'
+                code: '20',
             });
 
             expect(result).to.equal(20);
@@ -24,15 +24,15 @@ describe('Lib', () => {
 
         it('executes file', () => {
             const result = lib({
-                file: './test/data/tester-5'
+                file: './test/data/tester-5',
             });
 
             expect(result).to.deep.equal({
                 a: 103,
                 b: {
                     tag: 'test-data',
-                    test: 'Hello'
-                }
+                    test: 'Hello',
+                },
             });
         });
 
@@ -80,7 +80,7 @@ describe('Lib', () => {
         it('sets execution timeout', () => {
             const result = lib({
                 code: '10',
-                timeout: 3
+                timeout: 3,
             });
 
             expect(result).to.equal(10);
@@ -126,7 +126,7 @@ describe('Lib', () => {
 
             expect(result).to.deep.equal({
                 'tester-1': 102,
-                'tester-2': { tag: 'test-data' }
+                'tester-2': { tag: 'test-data' },
             });
         });
 
@@ -139,7 +139,7 @@ describe('Lib', () => {
                 next: {
                     dir: path.join(__dirname, './data'),
                     file: path.join(__dirname, './data/tester-6.js'),
-                }
+                },
             });
         });
     });
@@ -154,7 +154,7 @@ describe('Lib', () => {
 
             expect(result).to.deep.equal({
                 tag: 'test-data',
-                'test-change': 2
+                'test-change': 2,
             });
         });
 
@@ -168,13 +168,13 @@ describe('Lib', () => {
             const result = lib({
                 code,
                 modules: {
-                    'test-package': { tag: 'test-package' }
-                }
+                    'test-package': { tag: 'test-package' },
+                },
             });
 
             expect(result).to.deep.equal({
                 tag: 'test-package',
-                'test-change': 2
+                'test-change': 2,
             });
         });
 
@@ -194,7 +194,7 @@ describe('Lib', () => {
             const errors = {};
             lib({
                 code,
-                globals: { errors }
+                globals: { errors },
             });
 
             expect(errors.e1).to.equal(errors.e2);
@@ -205,11 +205,11 @@ describe('Lib', () => {
         it('allows to change root dir', () => {
             const result = lib({
                 code: 'require("./tester-2");',
-                root: './test/data'
+                root: './test/data',
             });
 
             expect(result).to.deep.equal({
-                tag: 'test-data'
+                tag: 'test-data',
             });
         });
     });
@@ -219,8 +219,8 @@ describe('Lib', () => {
             const result = lib({
                 code: 'a + b',
                 globals: {
-                    a: 1, b: 2
-                }
+                    a: 1, b: 2,
+                },
             });
 
             expect(result).to.equal(3);
@@ -232,8 +232,8 @@ describe('Lib', () => {
                 globals: {
                     module: 10,
                     exports: 'test',
-                    require: () => { }
-                }
+                    require: () => { },
+                },
             });
 
             expect(result).to.equal(102);
@@ -245,7 +245,7 @@ describe('Lib', () => {
             `;
             lib({
                 code,
-                globals: { expect }
+                globals: { expect },
             });
         });
 
@@ -257,7 +257,7 @@ describe('Lib', () => {
             `;
             lib({
                 code,
-                globals: { expect }
+                globals: { expect },
             });
         });
 
@@ -301,7 +301,7 @@ describe('Lib', () => {
             try {
                 lib({
                     code,
-                    globals: { obj }
+                    globals: { obj },
                 });
                 fail();
             } catch (e) {
@@ -314,7 +314,7 @@ describe('Lib', () => {
             try {
                 lib({
                     code: 'new Buffer();',
-                    noDefaultGlobals: true
+                    noDefaultGlobals: true,
                 });
                 fail();
             } catch (e) {
@@ -329,8 +329,8 @@ describe('Lib', () => {
             const result = lib({
                 code: 'require("test-package");',
                 modules: {
-                    'test-package': obj
-                }
+                    'test-package': obj,
+                },
             });
 
             expect(result).to.equal(obj);
@@ -341,8 +341,8 @@ describe('Lib', () => {
             const result = lib({
                 code: 'require("./test-file");',
                 modules: {
-                    [path.resolve('./test-file')]: obj
-                }
+                    [path.resolve('./test-file')]: obj,
+                },
             });
 
             expect(result).to.equal(obj);
@@ -360,8 +360,8 @@ describe('Lib', () => {
             const result = lib({
                 code: 'require("chai");',
                 modules: {
-                    chai: lib.INHERIT
-                }
+                    chai: lib.INHERIT,
+                },
             });
 
             expect(result.expect).to.equal(expect);
@@ -372,8 +372,8 @@ describe('Lib', () => {
                 lib({
                     code: 'require("not-found");',
                     modules: {
-                        'not-found': lib.INHERIT
-                    }
+                        'not-found': lib.INHERIT,
+                    },
                 });
                 fail();
             } catch (e) {

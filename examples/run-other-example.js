@@ -8,8 +8,8 @@ vmtx({
     modules: {
         [path.resolve()]: () => ({
             name: 'vmtx',
-            license: 'MIT'
+            license: 'MIT',
         }),
-        chai: { expect }
-    }
+        chai: { expect },
+    },
 });
