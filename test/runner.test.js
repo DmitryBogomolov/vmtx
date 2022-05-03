@@ -19,8 +19,21 @@ describe('run', () => {
 
     it('execute code with context', () => {
         assert.strictEqual(
-            run('a + b', { a: 1, b: 2 }),
+            run('a + b', {
+                variables: { a: 1, b: 2 },
+            }),
             3,
+        );
+    });
+
+    it('load modules', () => {
+        assert.strictEqual(
+            run('const { a } = require("test-module"); a;', {
+                resolve: (_name) => {
+                    return { a: 1 };
+                },
+            }),
+            1,
         );
     });
 });

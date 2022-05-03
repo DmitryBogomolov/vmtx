@@ -15,15 +15,40 @@ class ErrorWrapper extends Error {
     }
 }
 
-function runJs(code, filepath, context) {
-    const ctxExports = Object.create(null);
-    const ctxRequire = (_dependency) => {
+function resolveModuleName(dir, name) {
+    if (name[0] === '/' || name === '.') {
+        return path.resolve(dir, name);
+    }
+    return name;
+}
 
+function runJs({ code, filename, modulesCache, resolve, variables }) {
+    const ctxRequire = (dependency) => {
+        let cacheItem = modulesCache[dependency];
+        if (cacheItem) {
+            if (cacheItem.error) {
+                throw cacheItem.error;
+            }
+            return cacheItem.exports;
+        }
+        cacheItem = Object.create(null);
+        modulesCache[dependency] = cacheItem;
+        try {
+            const content = resolve(dependency);
+            cacheItem.exports = content;
+        } catch (err) {
+            cacheItem.error = err;
+        }
+        if (cacheItem.error) {
+            throw cacheItem.error;
+        }
+        return cacheItem.exports;
     };
+    const ctxExports = Object.create(null);
     const vmContext = {
-        ...context,
-        __filename: filepath,
-        __dirname: path.dirname(filepath),
+        ...variables,
+        __filename,
+        __dirname: path.dirname(filename),
         module: {
             require: ctxRequire,
             exports: ctxExports,
@@ -32,19 +57,35 @@ function runJs(code, filepath, context) {
         exports: ctxExports,
     };
     const vmOptions = {
-        filename: filepath,
+        filename,
         timeout: 1000,
     };
     try {
         const result = vm.runInNewContext(code, vmContext, vmOptions);
-        return result;
+        return {
+            result,
+            exports: vmContext.module.exports,
+        };
     } catch (err) {
-        throw new ErrorWrapper(err);
+        return {
+            error: new ErrorWrapper(err),
+        };
     }
 }
 
-function run(code, context) {
-    return runJs(code, 'ENTRY', context);
+function run(code, options) {
+    const modulesCache = Object.create(null);
+    const item = runJs({
+        code,
+        filename: path.resolve('__main__'),
+        variables: options ? options.variables : {},
+        resolve: options && options.resolve,
+        modulesCache,
+    });
+    if (item.error) {
+        throw item.error;
+    }
+    return item.result;
 }
 
 Object.assign(exports, { run });
