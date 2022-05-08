@@ -81,6 +81,18 @@ describe('basics', () => {
             '/test1/test2',
         );
     });
+
+    it('set execution timeout', () => {
+        assert.throws(() => {
+            run({
+                code: 'const now = Date.now(); while ((Date.now() - now) < 3000) { };',
+                timeout: 25,
+            });
+        }, {
+            name: 'Error',
+            message: 'Script execution timed out after 25ms',
+        });
+    }).timeout(5000);
 });
 
 describe('modules loading', () => {

@@ -1,5 +1,7 @@
-function runJson(code) {
-    return JSON.parse(code);
+class JsonRunner {
+    run(code) {
+        return JSON.parse(code);
+    }
 }
 
-exports.runJson = runJson;
+exports.JsonRunner = JsonRunner;

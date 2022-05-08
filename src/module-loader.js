@@ -1,6 +1,4 @@
 const path = require('path');
-const { runJs } = require('./js-runner');
-const { runJson } = require('./json-runner');
 
 const JS_EXT = '.js';
 const JSON_EXT = '.json';
@@ -38,28 +36,28 @@ class ModuleLoader {
             filename = modulePath + JS_EXT;
             if (this._isFileHandler(filename)) {
                 const js = this._readFileHandler(filename);
-                return runJs(js, filename, this);
+                return this._jsRunner.run(js, filename);
             }
             filename = modulePath + JSON_EXT;
             if (this._isFileHandler(filename)) {
                 const json = this._readFileHandler(filename);
-                return runJson(json);
+                return this._jsonRunner.run(json);
             }
             filename = path.join(modulePath, INDEX_JS);
             if (this._isFileHandler(filename)) {
                 const js = this._readFileHandler(filename);
-                return runJs(js, filename, this);
+                return this._jsRunner.run(js, filename);
             }
             filename = path.join(modulePath, INDEX_JSON);
             if (this._isFileHandler(filename)) {
                 const json = this._readFileHandler(filename);
-                return runJson(json);
+                return this._jsonRunner.run(json);
             }
         }
         if (ext === JS_EXT) {
             if (this._isFileHandler(modulePath)) {
                 const js = this._readFileHandler(modulePath);
-                return runJs(js, modulePath, this);
+                return this._jsRunner.run(js, filename);
             } else {
                 throw moduleNotFound(moduleNotFound);
             }
@@ -67,7 +65,7 @@ class ModuleLoader {
         if (ext === JSON_EXT) {
             if (this._isFileHandler(modulePath)) {
                 const json = this._readFileHandler(modulePath);
-                return runJson(json);
+                return this._jsonRunner.run(json);
             } else {
                 throw moduleNotFound(modulePath);
             }
@@ -96,8 +94,12 @@ class ModuleLoader {
         return cached.exports;
     }
 
-    globals() {
-        return this._globals;
+    setJsRunner(runner) {
+        this._jsRunner = runner;
+    }
+
+    setJsonRunner(runner) {
+        this._jsonRunner = runner;
     }
 }
 

@@ -1,7 +1,8 @@
 const path = require('path');
 const fs = require('fs');
 const { ModuleLoader } = require('./module-loader');
-const { runJs } = require('./js-runner');
+const { JsRunner } = require('./js-runner');
+const { JsonRunner } = require('./json-runner');
 
 function defaultLoadModule() {
     return null;
@@ -22,10 +23,11 @@ function pickFunction(value, defaultValue) {
 function normalizeOptions(options) {
     const opts = typeof options === 'string' ? { code: options } : (options || {});
     return {
-        code: opts.code,
+        code: opts.code && String(opts.code),
         globals: opts.globals || {},
         variables: opts.variables || {},
         rootdir: opts.rootdir ? path.resolve(opts.rootdir) : process.cwd(),
+        timeout: opts.timeout > 0 ? Number(opts.timeout) : 0,
         loadModule: pickFunction(opts.loadModule, defaultLoadModule),
         isFile: pickFunction(opts.isFile, defaultIsFile),
         readFile: pickFunction(opts.readFile, defaultReadFile),
@@ -34,14 +36,19 @@ function normalizeOptions(options) {
 
 function run(options) {
     const {
-        code, globals, variables, rootdir, loadModule, isFile, readFile,
+        code, globals, variables, rootdir, timeout, loadModule, isFile, readFile,
     } = normalizeOptions(options);
     if (!code) {
         throw new Error('Code is not provided');
     }
     const filename = path.join(rootdir, '__main__');
-    const loader = new ModuleLoader(rootdir, globals, loadModule, isFile, readFile);
-    return runJs(code, filename, loader, variables);
+    const moduleLoader = new ModuleLoader(rootdir, globals, loadModule, isFile, readFile);
+    const jsRunner = new JsRunner(globals, timeout);
+    const jsonRunner = new JsonRunner();
+    jsRunner.setModuleLoader(moduleLoader);
+    moduleLoader.setJsRunner(jsRunner);
+    moduleLoader.setJsonRunner(jsonRunner);
+    return jsRunner.run(code, filename, variables);
 }
 
 exports.run = run;
