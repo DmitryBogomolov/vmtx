@@ -8,7 +8,10 @@ const SAFE_PREFIX = '(this.constructor = Object);';
 class JsRunner {
     constructor(globals, timeout) {
         this._globals = globals;
-        this._vmOptions = {};
+        this._vmOptions = {
+            microtaskMode: 'afterEvaluate',
+            codeGeneration: false,
+        };
         if (timeout > 0) {
             this._vmOptions.timeout = timeout;
         }
