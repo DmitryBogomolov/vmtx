@@ -2,7 +2,7 @@
   "name": "vmtx",
   "version": "0.0.3",
   "description": "Executes code in sandbox using 'vm' package",
-  "main": "./src/index.js",
+  "main": "./index.js",
   "scripts": {
     "test": "mocha",
     "lint": "eslint . --fix",
