@@ -17,11 +17,11 @@ describe('run', () => {
         });
     });
 
-    it('execute code with context', () => {
+    it('execute code with variables', () => {
         assert.strictEqual(
             run({
                 code: 'a + b',
-                globals: { a: 1, b: 2 },
+                variables: { a: 1, b: 2 },
             }),
             3,
         );

@@ -2,13 +2,14 @@ const path = require('path');
 const vm = require('vm');
 const { ErrorWrapper } = require('./error-wrapper');
 
-function runJs(code, filename, moduleLoader) {
+function runJs(code, filename, moduleLoader, variables) {
     const dirname = path.dirname(filename);
     const require = (modulePath) => moduleLoader.load(modulePath, dirname);
     const exports = {};
     const vmModule = { exports };
     const vmContext = {
         ...moduleLoader.globals,
+        ...variables,
         __filename: filename,
         __dirname: dirname,
         module: vmModule,
@@ -21,7 +22,7 @@ function runJs(code, filename, moduleLoader) {
     try {
         const result = vm.runInNewContext(code, vmContext, vmOptions);
         const exp = vmModule.exports === exports ? exports : vmModule.exports;
-        return Object.getOwnPropertyNames(exp).length ? exp : result;
+        return variables ? result : exp;
     } catch (err) {
         throw new ErrorWrapper(err);
     }

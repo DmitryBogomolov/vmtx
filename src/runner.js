@@ -24,6 +24,7 @@ function normalizeOptions(options) {
     return {
         code: opts.code,
         globals: opts.globals || {},
+        variables: opts.variables || {},
         rootdir: opts.rootdir || process.cwd(),
         loadModule: pickFunction(opts.loadModule, defaultLoadModule),
         isFile: pickFunction(opts.isFile, defaultIsFile),
@@ -32,13 +33,15 @@ function normalizeOptions(options) {
 }
 
 function run(options) {
-    const { code, globals, rootdir, loadModule, isFile, readFile } = normalizeOptions(options);
+    const {
+        code, globals, variables, rootdir, loadModule, isFile, readFile,
+    } = normalizeOptions(options);
     if (!code) {
         throw new Error('Code is not provided');
     }
     const filename = path.join(rootdir, '__main__');
     const loader = new ModuleLoader(rootdir, globals, loadModule, isFile, readFile);
-    return runJs(code, filename, loader, globals);
+    return runJs(code, filename, loader, variables);
 }
 
 exports.run = run;
