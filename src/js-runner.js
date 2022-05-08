@@ -2,6 +2,9 @@ const path = require('path');
 const vm = require('vm');
 const { ErrorWrapper } = require('./error-wrapper');
 
+// vm.runInNewContext('this.constructor') return real Object.
+const SAFE_PREFIX = '(this.constructor = Object);';
+
 class JsRunner {
     constructor(globals, timeout) {
         this._globals = globals;
@@ -34,7 +37,7 @@ class JsRunner {
             filename,
         };
         try {
-            const result = vm.runInNewContext(code, vmContext, vmOptions);
+            const result = vm.runInNewContext(SAFE_PREFIX + code, vmContext, vmOptions);
             const exp = vmModule.exports === exports ? exports : vmModule.exports;
             return variables ? result : exp;
         } catch (err) {

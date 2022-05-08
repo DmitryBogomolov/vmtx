@@ -95,6 +95,26 @@ describe('basics', () => {
     }).timeout(5000);
 });
 
+describe('restrictions', () => {
+    it('do not define "process"', () => {
+        assert.throws(() => {
+            run('process');
+        }, {
+            name: 'ReferenceError',
+            message: 'process is not defined',
+        });
+    });
+
+    it('block access to "process"', () => {
+        assert.throws(() => {
+            run('this.constructor.constructor("return process")()');
+        }, {
+            name: 'ReferenceError',
+            message: 'process is not defined',
+        });
+    });
+});
+
 describe('modules loading', () => {
     it('load modules', () => {
         let loadedModule;
