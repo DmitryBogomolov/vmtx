@@ -3,7 +3,7 @@ const vm = require('vm');
 const { ErrorWrapper } = require('./error-wrapper');
 
 // vm.runInNewContext('this.constructor') return real Object.
-const SAFE_PREFIX = '(this.constructor = Object);';
+const SAFE_PREFIX = '(this.constructor = Object);\n';
 
 class JsRunner {
     constructor(globals, timeout) {
@@ -11,6 +11,7 @@ class JsRunner {
         this._vmOptions = {
             microtaskMode: 'afterEvaluate',
             codeGeneration: false,
+            lineOffset: -1, // because of SAFE_PREFIX
         };
         if (timeout > 0) {
             this._vmOptions.timeout = timeout;
