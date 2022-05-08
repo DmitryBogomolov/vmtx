@@ -1,4 +1,5 @@
 const assert = require('assert/strict');
+const path = require('path');
 const { run } = require('../src/runner');
 
 describe('run', () => {
@@ -27,15 +28,43 @@ describe('run', () => {
         );
     });
 
+    it('provide common constants', () => {
+        assert.strictEqual(
+            run('__filename'),
+            path.resolve('__main__'),
+        );
+        assert.strictEqual(
+            run('__dirname'),
+            path.resolve('.'),
+        );
+        assert.strictEqual(
+            run({
+                code: '__filename',
+                rootdir: '/test1/test2',
+            }),
+            '/test1/test2/__main__',
+        );
+        assert.strictEqual(
+            run({
+                code: '__dirname',
+                rootdir: '/test1/test2',
+            }),
+            '/test1/test2',
+        );
+    });
+
     it('load modules', () => {
+        let loadedModule;
         assert.strictEqual(
             run({
                 code: 'const { a } = require("test-module"); a;',
-                loadModule: (_modulePath) => {
-                    return { a: 1 };
+                loadModule: (moduleName) => {
+                    loadedModule = moduleName;
+                    return { a: 123 };
                 },
             }),
-            1,
+            123,
         );
+        assert.strictEqual(loadedModule, 'test-module');
     });
 });

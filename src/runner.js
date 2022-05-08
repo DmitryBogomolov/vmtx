@@ -25,7 +25,7 @@ function normalizeOptions(options) {
         code: opts.code,
         globals: opts.globals || {},
         variables: opts.variables || {},
-        rootdir: opts.rootdir || process.cwd(),
+        rootdir: opts.rootdir ? path.resolve(opts.rootdir) : process.cwd(),
         loadModule: pickFunction(opts.loadModule, defaultLoadModule),
         isFile: pickFunction(opts.isFile, defaultIsFile),
         readFile: pickFunction(opts.readFile, defaultReadFile),
