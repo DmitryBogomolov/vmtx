@@ -1,91 +1,43 @@
-const vm = require('vm');
 const path = require('path');
+const fs = require('fs');
+const { ModuleLoader } = require('./module-loader');
+const { runJs } = require('./js-runner');
 
-class ErrorWrapper extends Error {
-    constructor(err) {
-        super();
-        /** @type {Error} */
-        const { name, message, stack } = err;
-        const lines = stack.split('\n');
-        const idx = lines.findIndex((line) => line.indexOf('at Script.runInContext') >= 0);
-        const cleanStack = lines.slice(0, idx).join('\n');
-        this.name = name;
-        this.message = message;
-        this.stack = cleanStack;
-    }
+function defaultLoadModule() {
+    return null;
 }
 
-function resolveModuleName(dir, name) {
-    if (name[0] === '/' || name === '.') {
-        return path.resolve(dir, name);
-    }
-    return name;
+function defaultIsFile(filepath) {
+    return fs.existsSync(filepath);
 }
 
-function runJs({ code, filename, modulesCache, resolve, variables }) {
-    const ctxRequire = (dependency) => {
-        let cacheItem = modulesCache[dependency];
-        if (cacheItem) {
-            if (cacheItem.error) {
-                throw cacheItem.error;
-            }
-            return cacheItem.exports;
-        }
-        cacheItem = Object.create(null);
-        modulesCache[dependency] = cacheItem;
-        try {
-            const content = resolve(dependency);
-            cacheItem.exports = content;
-        } catch (err) {
-            cacheItem.error = err;
-        }
-        if (cacheItem.error) {
-            throw cacheItem.error;
-        }
-        return cacheItem.exports;
+function defaultReadFile(filepath) {
+    return fs.readFileSync(filepath, { encoding: 'utf8' });
+}
+
+function pickFunction(value, defaultValue) {
+    return typeof value === 'function' ? value : defaultValue;
+}
+
+function normalizeOptions(options) {
+    const opts = typeof options === 'string' ? { code: options } : (options || {});
+    return {
+        code: opts.code,
+        globals: opts.globals || {},
+        rootdir: opts.rootdir || process.cwd(),
+        loadModule: pickFunction(opts.loadModule, defaultLoadModule),
+        isFile: pickFunction(opts.isFile, defaultIsFile),
+        readFile: pickFunction(opts.readFile, defaultReadFile),
     };
-    const ctxExports = Object.create(null);
-    const vmContext = {
-        ...variables,
-        __filename,
-        __dirname: path.dirname(filename),
-        module: {
-            require: ctxRequire,
-            exports: ctxExports,
-        },
-        require: ctxRequire,
-        exports: ctxExports,
-    };
-    const vmOptions = {
-        filename,
-        timeout: 1000,
-    };
-    try {
-        const result = vm.runInNewContext(code, vmContext, vmOptions);
-        return {
-            result,
-            exports: vmContext.module.exports,
-        };
-    } catch (err) {
-        return {
-            error: new ErrorWrapper(err),
-        };
-    }
 }
 
-function run(code, options) {
-    const modulesCache = Object.create(null);
-    const item = runJs({
-        code,
-        filename: path.resolve('__main__'),
-        variables: options ? options.variables : {},
-        resolve: options && options.resolve,
-        modulesCache,
-    });
-    if (item.error) {
-        throw item.error;
+function run(options) {
+    const { code, globals, rootdir, loadModule, isFile, readFile } = normalizeOptions(options);
+    if (!code) {
+        throw new Error('code is not provided');
     }
-    return item.result;
+    const loader = new ModuleLoader(rootdir, loadModule, isFile, readFile);
+    return runJs(code, path.join(rootdir, '__main__'), loader, globals);
 }
 
-Object.assign(exports, { run });
+exports.run = run;

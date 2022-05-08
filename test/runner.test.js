@@ -19,8 +19,9 @@ describe('run', () => {
 
     it('execute code with context', () => {
         assert.strictEqual(
-            run('a + b', {
-                variables: { a: 1, b: 2 },
+            run({
+                code: 'a + b',
+                globals: { a: 1, b: 2 },
             }),
             3,
         );
@@ -28,8 +29,9 @@ describe('run', () => {
 
     it('load modules', () => {
         assert.strictEqual(
-            run('const { a } = require("test-module"); a;', {
-                resolve: (_name) => {
+            run({
+                code: 'const { a } = require("test-module"); a;',
+                loadModule: (_modulePath) => {
                     return { a: 1 };
                 },
             }),
