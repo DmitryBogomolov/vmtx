@@ -18,102 +18,87 @@ class ModuleLoader {
     }
 
     _loadByName(moduleName) {
-        let cached = this._cache.get(moduleName);
-        if (cached) {
-            return cached;
+        const mod = this._loadModuleHandler(moduleName);
+        if (mod === null) {
+            throw moduleNotFound(moduleName);
         }
-        cached = {};
-        try {
-            const mod = this._loadModuleHandler(moduleName);
-            if (mod === null) {
-                throw moduleNotFound(moduleName);
-            }
-            cached.exports = mod;
-        } catch (err) {
-            cached.error = err;
-        }
-        this._cache.set(moduleName, cached);
-        return cached;
+        return mod;
     }
 
     _loadByPath(modulePath) {
-        let cached = this._cache.get(modulePath);
-        if (cached) {
-            return cached;
+        if (!modulePath.startsWith(this._rootdir)) {
+            throw new Error(`Module "${modulePath}" is outside of root directory`);
         }
-        cached = {};
-        try {
-            if (!modulePath.startsWith(this._rootdir)) {
-                throw new Error(`Module "${modulePath}" is outside of root directory`);
+        const ext = path.extname(modulePath);
+        let filename = modulePath;
+        if (ext === '') {
+            if (this._isFileHandler(filename)) {
+                throw moduleNotFound(filename);
             }
-            const ext = path.extname(modulePath);
-            let filename = modulePath;
-            if (ext === '') {
-                if (this._isFileHandler(filename)) {
-                    throw moduleNotFound(filename);
-                }
-                filename = modulePath + JS_EXT;
-                if (this._isFileHandler(filename)) {
-                    const js = this._readFileHandler(filename);
-                    cached.exports = runJs(js, filename, this);
-                    // BREAK
-                }
-                filename = modulePath + JSON_EXT;
-                if (this._isFileHandler(filename)) {
-                    const json = this._readFileHandler(filename);
-                    cached.exports = runJson(json);
-                    // BREAK
-                }
-                filename = path.join(modulePath, INDEX_JS);
-                if (this._isFileHandler(filename)) {
-                    const js = this._readFileHandler(filename);
-                    cached.exports = runJs(js, filename, this);
-                    // BREAK
-                }
-                filename = path.join(modulePath, INDEX_JSON);
-                if (this._isFileHandler(filename)) {
-                    const json = this._readFileHandler(filename);
-                    cached.exports = runJson(json);
-                    // BREAK
-                }
+            filename = modulePath + JS_EXT;
+            if (this._isFileHandler(filename)) {
+                const js = this._readFileHandler(filename);
+                return runJs(js, filename, this);
             }
-            if (ext === JS_EXT) {
-                if (this._isFileHandler(modulePath)) {
-                    const js = this._readFileHandler(modulePath);
-                    cached.exports = runJs(js, modulePath, this);
-                    // BREAK
-                } else {
-                    throw moduleNotFound(moduleNotFound);
-                }
+            filename = modulePath + JSON_EXT;
+            if (this._isFileHandler(filename)) {
+                const json = this._readFileHandler(filename);
+                return runJson(json);
             }
-            if (ext === JSON_EXT) {
-                if (this._isFileHandler(modulePath)) {
-                    const json = this._readFileHandler(modulePath);
-                    cached.exports = runJson(json);
-                    // BREAK
-                } else {
-                    throw moduleNotFound(modulePath);
-                }
+            filename = path.join(modulePath, INDEX_JS);
+            if (this._isFileHandler(filename)) {
+                const js = this._readFileHandler(filename);
+                return runJs(js, filename, this);
             }
-            throw moduleNotFound(modulePath);
-        } catch (err) {
-            cached.error = err;
+            filename = path.join(modulePath, INDEX_JSON);
+            if (this._isFileHandler(filename)) {
+                const json = this._readFileHandler(filename);
+                return runJson(json);
+            }
         }
-        return cached;
+        if (ext === JS_EXT) {
+            if (this._isFileHandler(modulePath)) {
+                const js = this._readFileHandler(modulePath);
+                return runJs(js, modulePath, this);
+            } else {
+                throw moduleNotFound(moduleNotFound);
+            }
+        }
+        if (ext === JSON_EXT) {
+            if (this._isFileHandler(modulePath)) {
+                const json = this._readFileHandler(modulePath);
+                return runJson(json);
+            } else {
+                throw moduleNotFound(modulePath);
+            }
+        }
+        throw moduleNotFound(modulePath);
     }
 
-    load(modulePath, dir) {
-        let moduleInfo;
-        if (modulePath.startsWith('/') || modulePath.startsWith('./') || modulePath.startsWith('../')) {
-            moduleInfo = this._loadByPath(path.resolve(dir, modulePath));
-        } else {
-            moduleInfo = this._loadByName(modulePath);
+    load(moduleName, dir) {
+        const isRelativePath = isRelativeModulePath(moduleName);
+        const modulePath = isRelativePath ? path.resolve(dir, moduleName) : moduleName;
+        let cached = this._cache.get(modulePath);
+        if (!cached) {
+            cached = {};
+            try {
+                cached.exports = isRelativePath
+                    ? this._loadByPath(modulePath)
+                    : this._loadByName(modulePath);
+            } catch (err) {
+                cached.error = err;
+            }
+            this._cache.set(modulePath, cached);
         }
-        if (moduleInfo.error) {
-            throw moduleInfo.error;
+        if (cached.error) {
+            throw cached.error;
         }
-        return moduleInfo.exports;
+        return cached.exports;
     }
+}
+
+function isRelativeModulePath(moduleName) {
+    return moduleName.startsWith('/') || moduleName.startsWith('./') || moduleName.startsWith('../');
 }
 
 function moduleNotFound(modulePath) {
