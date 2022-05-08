@@ -42,7 +42,7 @@ function run(options) {
         throw new Error('Code is not provided');
     }
     const filename = path.join(rootdir, '__main__');
-    const moduleLoader = new ModuleLoader(rootdir, globals, loadModule, isFile, readFile);
+    const moduleLoader = new ModuleLoader(rootdir, loadModule, isFile, readFile);
     const jsRunner = new JsRunner(globals, timeout);
     const jsonRunner = new JsonRunner();
     jsRunner.setModuleLoader(moduleLoader);

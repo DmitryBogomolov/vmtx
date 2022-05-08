@@ -6,9 +6,8 @@ const INDEX_JS = 'index' + JS_EXT;
 const INDEX_JSON = 'index' + JSON_EXT;
 
 class ModuleLoader {
-    constructor(rootdir, globals, loadModuleHandler, isFileHandler, readFileHandler) {
+    constructor(rootdir, loadModuleHandler, isFileHandler, readFileHandler) {
         this._rootdir = rootdir;
-        this._globals = globals;
         this._loadModuleHandler = loadModuleHandler;
         this._isFileHandler = isFileHandler;
         this._readFileHandler = readFileHandler;
