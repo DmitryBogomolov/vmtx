@@ -1,7 +1,7 @@
-class JsonRunner {
+class JsonParser {
     run(code) {
         return JSON.parse(code);
     }
 }
 
-exports.JsonRunner = JsonRunner;
+exports.JsonParser = JsonParser;

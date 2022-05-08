@@ -5,7 +5,7 @@ const { ErrorWrapper } = require('./error-wrapper');
 // vm.runInNewContext('this.constructor') return real Object.
 const SAFE_PREFIX = '(this.constructor = Object);\n';
 
-class JsRunner {
+class JsParser {
     constructor(globals, timeout) {
         this._globals = globals;
         this._vmOptions = {
@@ -50,4 +50,4 @@ class JsRunner {
     }
 }
 
-exports.JsRunner = JsRunner;
+exports.JsParser = JsParser;

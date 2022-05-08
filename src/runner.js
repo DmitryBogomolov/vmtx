@@ -1,8 +1,8 @@
 const path = require('path');
 const fs = require('fs');
 const { ModuleLoader } = require('./module-loader');
-const { JsRunner } = require('./js-runner');
-const { JsonRunner } = require('./json-runner');
+const { JsParser } = require('./js-parser');
+const { JsonParser } = require('./json-parser');
 
 function defaultLoadModule() {
     return null;
@@ -47,12 +47,12 @@ function run(options) {
     }
     const filename = path.join(rootdir, '__main__');
     const moduleLoader = new ModuleLoader(rootdir, loadModule, isFile, readFile);
-    const jsRunner = new JsRunner(globals, timeout);
-    const jsonRunner = new JsonRunner();
-    jsRunner.setModuleLoader(moduleLoader);
-    moduleLoader.setJsRunner(jsRunner);
-    moduleLoader.setJsonRunner(jsonRunner);
-    return jsRunner.run(code, filename, variables);
+    const jsParser = new JsParser(globals, timeout);
+    const jsonParser = new JsonParser();
+    jsParser.setModuleLoader(moduleLoader);
+    moduleLoader.setJsParser(jsParser);
+    moduleLoader.setJsonParser(jsonParser);
+    return jsParser.run(code, filename, variables);
 }
 
 exports.run = run;

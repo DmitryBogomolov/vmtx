@@ -35,28 +35,28 @@ class ModuleLoader {
             filename = modulePath + JS_EXT;
             if (this._isFileHandler(filename)) {
                 const js = this._readFileHandler(filename);
-                return this._jsRunner.run(js, filename);
+                return this._jsParser.run(js, filename);
             }
             filename = modulePath + JSON_EXT;
             if (this._isFileHandler(filename)) {
                 const json = this._readFileHandler(filename);
-                return this._jsonRunner.run(json);
+                return this._jsonParser.run(json);
             }
             filename = path.join(modulePath, INDEX_JS);
             if (this._isFileHandler(filename)) {
                 const js = this._readFileHandler(filename);
-                return this._jsRunner.run(js, filename);
+                return this._jsParser.run(js, filename);
             }
             filename = path.join(modulePath, INDEX_JSON);
             if (this._isFileHandler(filename)) {
                 const json = this._readFileHandler(filename);
-                return this._jsonRunner.run(json);
+                return this._jsonParser.run(json);
             }
         }
         if (ext === JS_EXT) {
             if (this._isFileHandler(modulePath)) {
                 const js = this._readFileHandler(modulePath);
-                return this._jsRunner.run(js, filename);
+                return this._jsParser.run(js, filename);
             } else {
                 throw moduleNotFound(modulePath);
             }
@@ -64,7 +64,7 @@ class ModuleLoader {
         if (ext === JSON_EXT) {
             if (this._isFileHandler(modulePath)) {
                 const json = this._readFileHandler(modulePath);
-                return this._jsonRunner.run(json);
+                return this._jsonParser.run(json);
             } else {
                 throw moduleNotFound(modulePath);
             }
@@ -93,12 +93,12 @@ class ModuleLoader {
         return cached.exports;
     }
 
-    setJsRunner(runner) {
-        this._jsRunner = runner;
+    setJsParser(parser) {
+        this._jsParser = parser;
     }
 
-    setJsonRunner(runner) {
-        this._jsonRunner = runner;
+    setJsonParser(parser) {
+        this._jsonParser = parser;
     }
 }
 

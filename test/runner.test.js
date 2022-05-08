@@ -392,7 +392,7 @@ describe('relative modules loading with callbacks', () => {
                     return 'module.exports = a + b';
                 },
             }),
-            3
+            3,
         );
     });
 });
