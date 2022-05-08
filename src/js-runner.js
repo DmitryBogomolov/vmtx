@@ -2,13 +2,13 @@ const path = require('path');
 const vm = require('vm');
 const { ErrorWrapper } = require('./error-wrapper');
 
-function runJs(code, filename, moduleLoader, globals) {
+function runJs(code, filename, moduleLoader) {
     const dirname = path.dirname(filename);
     const require = (modulePath) => moduleLoader.load(modulePath, dirname);
     const exports = {};
     const vmModule = { exports };
     const vmContext = {
-        ...globals,
+        ...moduleLoader.globals,
         __filename: filename,
         __dirname: dirname,
         module: vmModule,

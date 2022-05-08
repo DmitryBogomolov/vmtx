@@ -2,9 +2,15 @@ const path = require('path');
 const { runJs } = require('./js-runner');
 const { runJson } = require('./json-runner');
 
+const JS_EXT = '.js';
+const JSON_EXT = '.json';
+const INDEX_JS = 'index' + JS_EXT;
+const INDEX_JSON = 'index' + JSON_EXT;
+
 class ModuleLoader {
-    constructor(rootdir, loadModuleHandler, isFileHandler, readFileHandler) {
+    constructor(rootdir, globals, loadModuleHandler, isFileHandler, readFileHandler) {
         this._rootdir = rootdir;
+        this.globals = globals;
         this._loadModuleHandler = loadModuleHandler;
         this._isFileHandler = isFileHandler;
         this._readFileHandler = readFileHandler;
@@ -20,7 +26,7 @@ class ModuleLoader {
         try {
             const mod = this._loadModuleHandler(moduleName);
             if (mod === null) {
-                throw new Error(`module ${moduleName} is not found`);
+                throw moduleNotFound(moduleName);
             }
             cached.exports = mod;
         } catch (err) {
@@ -38,42 +44,58 @@ class ModuleLoader {
         cached = {};
         try {
             if (!modulePath.startsWith(this._rootdir)) {
-                throw new Error(`${modulePath} is outside of root directory`);
+                throw new Error(`Module "${modulePath}" is outside of root directory`);
             }
-            ext = path.extname(modulePath);
+            const ext = path.extname(modulePath);
+            let filename = modulePath;
             if (ext === '') {
-                if (this._isFileHandler(modulePath)) {
-                    throw null;
+                if (this._isFileHandler(filename)) {
+                    throw moduleNotFound(filename);
                 }
-                if (this._isFileHandler(modulePath + '.js')) {
-                    const js = this._readFileHandler(modulePath + '.js');
+                filename = modulePath + JS_EXT;
+                if (this._isFileHandler(filename)) {
+                    const js = this._readFileHandler(filename);
+                    cached.exports = runJs(js, filename, this);
+                    // BREAK
                 }
-                if (this._isFileHandler(modulePath + '.json')) {
-                    const json = this._readFileHandler(modulePath + '.json');
-
+                filename = modulePath + JSON_EXT;
+                if (this._isFileHandler(filename)) {
+                    const json = this._readFileHandler(filename);
+                    cached.exports = runJson(json);
+                    // BREAK
                 }
-                if (this._isFileHandler(path.join(modulePath, 'index.js'))) {
-                    this._readFileHandler(path.join(modulePath, 'index.js'));
+                filename = path.join(modulePath, INDEX_JS);
+                if (this._isFileHandler(filename)) {
+                    const js = this._readFileHandler(filename);
+                    cached.exports = runJs(js, filename, this);
+                    // BREAK
                 }
-                if (this._isFileHandler(path.join(modulePath, 'index.json'))) {
-                    this._readFileHandler(path.join(modulePath, 'index.json'));
+                filename = path.join(modulePath, INDEX_JSON);
+                if (this._isFileHandler(filename)) {
+                    const json = this._readFileHandler(filename);
+                    cached.exports = runJson(json);
+                    // BREAK
                 }
             }
-            if (ext === '.js') {
+            if (ext === JS_EXT) {
                 if (this._isFileHandler(modulePath)) {
-                    this._readFileHandler(modulePath);
+                    const js = this._readFileHandler(modulePath);
+                    cached.exports = runJs(js, modulePath, this);
+                    // BREAK
                 } else {
-                    throw null;
+                    throw moduleNotFound(moduleNotFound);
                 }
             }
-            if (ext === '.json') {
+            if (ext === JSON_EXT) {
                 if (this._isFileHandler(modulePath)) {
-                    this._readFileHandler(modulePath);
+                    const json = this._readFileHandler(modulePath);
+                    cached.exports = runJson(json);
+                    // BREAK
                 } else {
-                    throw null;
+                    throw moduleNotFound(modulePath);
                 }
             }
-            throw null;
+            throw moduleNotFound(modulePath);
         } catch (err) {
             cached.error = err;
         }
@@ -92,6 +114,10 @@ class ModuleLoader {
         }
         return moduleInfo.exports;
     }
+}
+
+function moduleNotFound(modulePath) {
+    throw new Error(`Module "${modulePath}" is not found`);
 }
 
 exports.ModuleLoader = ModuleLoader;

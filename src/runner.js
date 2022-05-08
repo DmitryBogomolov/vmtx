@@ -34,10 +34,11 @@ function normalizeOptions(options) {
 function run(options) {
     const { code, globals, rootdir, loadModule, isFile, readFile } = normalizeOptions(options);
     if (!code) {
-        throw new Error('code is not provided');
+        throw new Error('Code is not provided');
     }
-    const loader = new ModuleLoader(rootdir, loadModule, isFile, readFile);
-    return runJs(code, path.join(rootdir, '__main__'), loader, globals);
+    const filename = path.join(rootdir, '__main__');
+    const loader = new ModuleLoader(rootdir, globals, loadModule, isFile, readFile);
+    return runJs(code, filename, loader, globals);
 }
 
 exports.run = run;
