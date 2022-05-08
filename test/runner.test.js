@@ -2,14 +2,33 @@ const assert = require('assert/strict');
 const path = require('path');
 const { run } = require('../src/runner');
 
-describe('run', () => {
+describe('basics', () => {
     it('execute simple code', () => {
         assert.strictEqual(run('1'), 1);
         assert.strictEqual(run('"test"'), 'test');
         assert.strictEqual(run('1 + 2 * 3'), 7);
     });
 
-    it('report errors', () => {
+    it('fail on undefined argument', () => {
+        assert.throws(() => {
+            run();
+        }, {
+            name: 'Error',
+            message: 'Code is not provided',
+        });
+    });
+
+    it('return last command result', () => {
+        assert.strictEqual(run('1;2;3;'), 3);
+    });
+
+    it('report code execution errors', () => {
+        assert.throws(() => {
+            run('throw new Error("test");');
+        }, {
+            name: 'Error',
+            message: 'test',
+        });
         assert.throws(() => {
             run('1 + a');
         }, {
@@ -23,6 +42,16 @@ describe('run', () => {
             run({
                 code: 'a + b',
                 variables: { a: 1, b: 2 },
+            }),
+            3,
+        );
+    });
+
+    it('execute code with globals', () => {
+        assert.strictEqual(
+            run({
+                code: 'a + b',
+                globals: { a: 1, b: 2 },
             }),
             3,
         );
@@ -52,7 +81,9 @@ describe('run', () => {
             '/test1/test2',
         );
     });
+});
 
+describe('modules loading', () => {
     it('load modules', () => {
         let loadedModule;
         assert.strictEqual(
@@ -66,5 +97,14 @@ describe('run', () => {
             123,
         );
         assert.strictEqual(loadedModule, 'test-module');
+    });
+
+    it('report errors on not found modules', () => {
+        assert.throws(() => {
+            run('require("test-module");');
+        }, {
+            name: 'Error',
+            message: 'Module "test-module" is not found',
+        });
     });
 });
