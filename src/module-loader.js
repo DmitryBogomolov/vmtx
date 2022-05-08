@@ -10,7 +10,7 @@ const INDEX_JSON = 'index' + JSON_EXT;
 class ModuleLoader {
     constructor(rootdir, globals, loadModuleHandler, isFileHandler, readFileHandler) {
         this._rootdir = rootdir;
-        this.globals = globals;
+        this._globals = globals;
         this._loadModuleHandler = loadModuleHandler;
         this._isFileHandler = isFileHandler;
         this._readFileHandler = readFileHandler;
@@ -94,6 +94,10 @@ class ModuleLoader {
             throw cached.error;
         }
         return cached.exports;
+    }
+
+    globals() {
+        return this._globals;
     }
 }
 

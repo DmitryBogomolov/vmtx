@@ -8,7 +8,7 @@ function runJs(code, filename, moduleLoader, variables) {
     const exports = {};
     const vmModule = { exports };
     const vmContext = {
-        ...moduleLoader.globals,
+        ...moduleLoader.globals(),
         ...variables,
         __filename: filename,
         __dirname: dirname,
