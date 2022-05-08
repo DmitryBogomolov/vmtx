@@ -9,7 +9,11 @@ function defaultLoadModule() {
 }
 
 function defaultIsFile(filepath) {
-    return fs.existsSync(filepath);
+    try {
+        return fs.statSync(filepath).isFile();
+    } catch (_) {
+        return false;
+    }
 }
 
 function defaultReadFile(filepath) {

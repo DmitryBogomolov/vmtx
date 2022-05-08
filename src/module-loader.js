@@ -58,7 +58,7 @@ class ModuleLoader {
                 const js = this._readFileHandler(modulePath);
                 return this._jsRunner.run(js, filename);
             } else {
-                throw moduleNotFound(moduleNotFound);
+                throw moduleNotFound(modulePath);
             }
         }
         if (ext === JSON_EXT) {
