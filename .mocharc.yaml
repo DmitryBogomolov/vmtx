@@ -1,0 +1,5 @@
+full-trace: true
+reporter: 'spec'
+check-leaks: true
+color: true
+spec: './tests/**/*.test.js'

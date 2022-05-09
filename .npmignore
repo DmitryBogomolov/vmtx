@@ -3,4 +3,4 @@ test
 examples
 coverage
 .eslintrc.json
-.travis.yml
+.github
