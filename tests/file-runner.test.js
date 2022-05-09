@@ -10,9 +10,23 @@ describe('file-runner', () => {
             );
             assert.strictEqual(
                 runFile('./tests/data/tester-5.js', {
-                    variables: {
-                        a: 1, b: 2,
-                    },
+                    variables: { a: 1, b: 2 },
+                }),
+                3,
+            );
+        });
+
+        it('apply rootdir', () => {
+            assert.strictEqual(
+                runFile('./tester-4.js', {
+                    rootdir: './tests/data',
+                }),
+                3,
+            );
+            assert.strictEqual(
+                runFile('./tester-5.js', {
+                    rootdir: './tests/data',
+                    variables: { a: 1, b: 2 },
                 }),
                 3,
             );
