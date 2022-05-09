@@ -1,5 +1,0 @@
---use_strict
---check-leaks
---full-trace
---reporter spec
---colors
