@@ -19,6 +19,7 @@
   "homepage": "https://github.com/DmitryBogomolov/vmtx",
   "devDependencies": {
     "eslint": "^8.15.0",
+    "eslint-config-dmbg-js": "^0.0.1",
     "mocha": "^10.0.0"
   },
   "keywords": [
