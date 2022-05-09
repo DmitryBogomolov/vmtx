@@ -1,6 +1,7 @@
-.npmignore
-test
 examples
-coverage
-.eslintrc.json
+tests
 .github
+.vscode
+.editorconfig
+.eslintrc.json
+.mocharc.yaml
