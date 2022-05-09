@@ -9,10 +9,20 @@ describe('file-runner', () => {
                 3,
             );
             assert.strictEqual(
+                runFile('./tests/data/tester-4'),
+                3,
+            );
+            assert.strictEqual(
                 runFile('./tests/data/tester-5.js', {
                     variables: { a: 1, b: 2 },
                 }),
                 3,
+            );
+            assert.strictEqual(
+                runFile('./tests/data/tester-5', {
+                    variables: { a: 3, b: 4 },
+                }),
+                7,
             );
         });
 

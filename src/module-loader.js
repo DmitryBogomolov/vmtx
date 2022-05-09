@@ -103,7 +103,8 @@ class ModuleLoader {
 }
 
 function isRelativeModulePath(moduleName) {
-    return moduleName.startsWith('/') || moduleName.startsWith('./') || moduleName.startsWith('../');
+    return moduleName.startsWith('/') || moduleName.startsWith('./')
+        || moduleName.startsWith('../') || moduleName === '..';
 }
 
 function moduleNotFound(modulePath) {

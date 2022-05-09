@@ -1,23 +1,11 @@
 const path = require('path');
-const fs = require('fs');
+const { defaultIsFile, defaultReadFile } = require('./util');
 const { ModuleLoader } = require('./module-loader');
 const { JsParser } = require('./js-parser');
 const { JsonParser } = require('./json-parser');
 
 function defaultLoadModule() {
     return null;
-}
-
-function defaultIsFile(filepath) {
-    try {
-        return fs.statSync(filepath).isFile();
-    } catch (_) {
-        return false;
-    }
-}
-
-function defaultReadFile(filepath) {
-    return fs.readFileSync(filepath, { encoding: 'utf8' });
 }
 
 function pickFunction(value, defaultValue) {
