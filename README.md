@@ -2,14 +2,13 @@
 
 [![CI](https://github.com/DmitryBogomolov/vmtx/actions/workflows/ci.yml/badge.svg)](https://github.com/DmitryBogomolov/vmtx/actions/workflows/ci.yml)
 
-[![Coverage Status](https://coveralls.io/repos/github/DmitryBogomolov/vmtx/badge.svg?branch=master)](https://coveralls.io/github/DmitryBogomolov/vmtx?branch=master)
-
 Executes code in sandbox using `vm` package.
 
 ```javascript
-const execute = require('vmtx');
+const assert = require('assert/strict');
+const { run } = require('vmtx');
 
-assert.equal(execute('123'), 123);
+assert.strictEqual(execute('123'), 123);
 ```
 
 ## Examples
@@ -19,91 +18,87 @@ assert.equal(execute('123'), 123);
 Path to file is resolved against working directory.
 
 ```javascript
-execute(`require('./path/to/file')`);
+run(`require('./path/to/file')`);
 ```
 
 But can also be resolved against custom directory.
 
 ```javascript
-execute({
-    code: `require('./path/to/file')`,
-    root: './path/to/dir'
+run({
+    code: 'require("./path/to/file")',
+    rootdir: './path/to/dir',
 });
 ```
 
-### Execute file instead of code
+### Execute js file
 
 ```javascript
-execute({ file: './path/to/file' });
+const { runFile } = require('vmtx');
+runFile('./path/to/file');
 ```
 
-### Default globals
-
-Some globals are provided by default.
+### Variables
 
 ```javascript
-execute(`console.log('Hello');`);
+run({
+    code: 'a + b',
+    variables: {
+        a: 1,
+        b: 2,
+    },
+});
 ```
+Variables are visible only in main code.
 
-Use `noDefaultGlobals: true` to disable.
-
-### Custom globals
+### Globals
 
 ```javascript
-execute({
+run({
     code: 'doSomething();',
     globals: {
         doSomething() { }
-    }
+    },
 });
 ```
+Unlike variables globals are visible in other modules also.
 
-### Inherit real modules
-
-```javascript
-execute({
-    code: `
-        const fs = require('fs');
-        const path = require('path');
-
-        fs.writeFile(path.resolve('./test.txt'), 'Hello', 'utf8');
-    `,
-    modules: {
-        fs: execute.INHERIT,
-        path: execute.INHERIT
-    }
-});
-```
-
-### Provide custom modules
+### Modules
 
 ```javascript
-execute({
+run({
     code: `
-        const myModule = require('my-test');
-        const myFile = require('./my-file');
+        const myModule = require("my-test");
+        const myFile = require("./my-file");
 
         console.log(myModule.myData);
         console.log(myFile.myData);
     `,
-    modules: {
-        'my-test': { myData: 'Hello module' },
-        [path.resolve('./my-file')]: { myData: 'Hello file' }
-    }
+    loadModule(moduleName) {
+        if (moduleName === 'my-test') {
+            return { myData: 'Hello World' };
+        }
+        return null;
+    },
+    isFile(filepath) {
+        return filepath === path.resolve('./my-file.js');
+    },
+    readFile(filepath) {
+        if (filepath === path.resolve('./my-file.js')) {
+            return { myData: 'Hello World' };
+        }
+    },
 });
 ```
 
-### Control execution timeout
+### Execution timeout
 
 ```javascript
-execute({
-    code: `
-        doSomeLongRunningTask()
-    `,
-    timeout: 30
+run({
+    code: 'doSomeLongRunningTask()',
+    timeout: 30,
 });
 ```
 
 ## License
 
-  [MIT](LICENSE)
+[MIT](LICENSE)
