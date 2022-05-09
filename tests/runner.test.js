@@ -164,23 +164,23 @@ describe('runner', () => {
     describe('relative modules loading', () => {
         it('load files', () => {
             assert.strictEqual(
-                run('require("./test/data/tester-1.js")'),
+                run('require("./tests/data/tester-1.js")'),
                 102,
             );
             assert.strictEqual(
-                run('require("./test/data/tester-1")'),
+                run('require("./tests/data/tester-1")'),
                 102,
             );
             assert.deepStrictEqual(
-                run('require("./test/data/tester-2.json")'),
+                run('require("./tests/data/tester-2.json")'),
                 { tag: 'test-data' },
             );
             assert.deepStrictEqual(
-                run('require("./test/data/tester-2")'),
+                run('require("./tests/data/tester-2")'),
                 { tag: 'test-data' },
             );
             assert.deepStrictEqual(
-                run('require("./test/data/tester-3")'),
+                run('require("./tests/data/tester-3")'),
                 {
                     'tester-1': 102,
                     'tester-2': { tag: 'test-data' },
@@ -190,33 +190,33 @@ describe('runner', () => {
 
         it('apply rootdir', () => {
             assert.strictEqual(
-                run({ code: 'require("./tester-1")', rootdir: './test/data' }),
+                run({ code: 'require("./tester-1")', rootdir: './tests/data' }),
                 102,
             );
             assert.deepStrictEqual(
-                run({ code: 'require("./data/tester-2")', rootdir: './test' }),
+                run({ code: 'require("./data/tester-2")', rootdir: './tests' }),
                 { tag: 'test-data' },
             );
             assert.deepStrictEqual(
-                run({ code: 'require("./test/data/tester-3")', rootdir: '.' }),
+                run({ code: 'require("./tests/data/tester-3")', rootdir: '.' }),
                 {
                     'tester-1': 102,
                     'tester-2': { tag: 'test-data' },
                 },
             );
             assert.strictEqual(
-                run({ code: 'require("./data/folder-1")', rootdir: './test' }),
+                run({ code: 'require("./data/folder-1")', rootdir: './tests' }),
                 101,
             );
             assert.deepStrictEqual(
-                run({ code: 'require("./folder-2")', rootdir: './test/data' }),
+                run({ code: 'require("./folder-2")', rootdir: './tests/data' }),
                 { tag: 'test-data' },
             );
         });
 
         it('forbid path outside of rootdir', () => {
             assert.throws(() => {
-                run({ code: 'require("../tmp")', rootdir: './test' });
+                run({ code: 'require("../tmp")', rootdir: './tests' });
             }, {
                 name: 'Error',
                 message: `Module "${path.resolve('tmp')}" is outside of root directory`,
@@ -226,8 +226,8 @@ describe('runner', () => {
         it('cache loaded modules', () => {
             assert.strictEqual(
                 run(`
-                const mod1 = require("./test/data/tester-2");
-                const mod2 = require("./test/data/tester-2");
+                const mod1 = require("./tests/data/tester-2");
+                const mod2 = require("./tests/data/tester-2");
                 mod1 === mod2;
             `),
                 true,
@@ -236,16 +236,16 @@ describe('runner', () => {
 
         it('raise error when file does not exist', () => {
             assert.throws(() => {
-                run('require("./test/data/tester-1.json")');
+                run('require("./tests/data/tester-1.json")');
             }, {
                 name: 'Error',
-                message: `Module "${path.resolve('./test/data/tester-1.json')}" is not found`,
+                message: `Module "${path.resolve('./tests/data/tester-1.json')}" is not found`,
             });
             assert.throws(() => {
-                run('require("./test/data/tester-2.js")');
+                run('require("./tests/data/tester-2.js")');
             }, {
                 name: 'Error',
-                message: `Module "${path.resolve('./test/data/tester-2.js')}" is not found`,
+                message: `Module "${path.resolve('./tests/data/tester-2.js')}" is not found`,
             });
         });
     });
@@ -254,9 +254,9 @@ describe('runner', () => {
         it('load files', () => {
             assert.strictEqual(
                 run({
-                    code: 'require("./test/data/tester-1.js")',
+                    code: 'require("./tests/data/tester-1.js")',
                     isFile(filepath) {
-                        return filepath === path.resolve('./test/data/tester-1.js');
+                        return filepath === path.resolve('./tests/data/tester-1.js');
                     },
                     readFile(_filepath) {
                         return 'module.exports = 202;';
@@ -266,9 +266,9 @@ describe('runner', () => {
             );
             assert.strictEqual(
                 run({
-                    code: 'require("./test/data/tester-1")',
+                    code: 'require("./tests/data/tester-1")',
                     isFile(filepath) {
-                        return filepath === path.resolve('./test/data/tester-1.js');
+                        return filepath === path.resolve('./tests/data/tester-1.js');
                     },
                     readFile(_filepath) {
                         return 'module.exports = 202;';
@@ -278,9 +278,9 @@ describe('runner', () => {
             );
             assert.deepStrictEqual(
                 run({
-                    code: 'require("./test/data/tester-2.json")',
+                    code: 'require("./tests/data/tester-2.json")',
                     isFile(filepath) {
-                        return filepath === path.resolve('./test/data/tester-2.json');
+                        return filepath === path.resolve('./tests/data/tester-2.json');
                     },
                     readFile(_filepath) {
                         return '{ "tag": "test" }';
@@ -290,9 +290,9 @@ describe('runner', () => {
             );
             assert.deepStrictEqual(
                 run({
-                    code: 'require("./test/data/tester-2")',
+                    code: 'require("./tests/data/tester-2")',
                     isFile(filepath) {
-                        return filepath === path.resolve('./test/data/tester-2.json');
+                        return filepath === path.resolve('./tests/data/tester-2.json');
                     },
                     readFile(_filepath) {
                         return '{ "tag": "test" }';
@@ -302,25 +302,25 @@ describe('runner', () => {
             );
             assert.deepStrictEqual(
                 run({
-                    code: 'require("./test/data/tester-3")',
+                    code: 'require("./tests/data/tester-3")',
                     isFile(filepath) {
                         return [
-                            path.resolve('./test/data/tester-1.js'),
-                            path.resolve('./test/data/tester-2.json'),
-                            path.resolve('./test/data/tester-3.js'),
+                            path.resolve('./tests/data/tester-1.js'),
+                            path.resolve('./tests/data/tester-2.json'),
+                            path.resolve('./tests/data/tester-3.js'),
                         ].includes(filepath);
                     },
                     readFile(filepath) {
-                        if (filepath === path.resolve('./test/data/tester-3.js')) {
+                        if (filepath === path.resolve('./tests/data/tester-3.js')) {
                             return `
                             exports['tester-1'] = require('./tester-1.js');
                             exports['tester-2'] = require('./tester-2.json');
                         `;
                         }
-                        if (filepath === path.resolve('./test/data/tester-1.js')) {
+                        if (filepath === path.resolve('./tests/data/tester-1.js')) {
                             return 'module.exports = 202;';
                         }
-                        if (filepath === path.resolve('./test/data/tester-2.json')) {
+                        if (filepath === path.resolve('./tests/data/tester-2.json')) {
                             return '{ "tag": "test" }';
                         }
                     },
@@ -335,25 +335,25 @@ describe('runner', () => {
         it('raise error when file does not exist', () => {
             assert.throws(() => {
                 run({
-                    code: 'require("./test/data/tester-1.js")',
+                    code: 'require("./tests/data/tester-1.js")',
                     isFile(_filepath) {
                         return false;
                     },
                 });
             }, {
                 name: 'Error',
-                message: `Module "${path.resolve('./test/data/tester-1.js')}" is not found`,
+                message: `Module "${path.resolve('./tests/data/tester-1.js')}" is not found`,
             });
             assert.throws(() => {
                 run({
-                    code: 'require("./test/data/tester-2.json")',
+                    code: 'require("./tests/data/tester-2.json")',
                     isFile(_filepath) {
                         return false;
                     },
                 });
             }, {
                 name: 'Error',
-                message: `Module "${path.resolve('./test/data/tester-2.json')}" is not found`,
+                message: `Module "${path.resolve('./tests/data/tester-2.json')}" is not found`,
             });
         });
 
